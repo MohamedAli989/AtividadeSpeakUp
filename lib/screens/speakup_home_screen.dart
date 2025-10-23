@@ -2,22 +2,35 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../utils/colors.dart';
+import '../services/content_service.dart';
+import '../models/lesson.dart';
+import '../providers/user_provider.dart';
+import 'lesson_screen.dart';
+import 'settings_screen.dart';
 
-class SpeakUpHomeScreen extends StatefulWidget {
+class SpeakUpHomeScreen extends ConsumerStatefulWidget {
   const SpeakUpHomeScreen({super.key});
 
   @override
-  State<SpeakUpHomeScreen> createState() => _SpeakUpHomeScreenState();
+  ConsumerState<SpeakUpHomeScreen> createState() => _SpeakUpHomeScreenState();
 }
 
-class _SpeakUpHomeScreenState extends State<SpeakUpHomeScreen> {
+class _SpeakUpHomeScreenState extends ConsumerState<SpeakUpHomeScreen> {
   bool _isRecording = false;
+  List<Lesson> _lessons = [];
+  bool _loadingLessons = true;
+  int _selectedIndex = 0;
+  late final List<Widget> _widgetOptions;
 
   Future<void> _handleMicPermission() async {
     final status = await Permission.microphone.request();
     if (status.isGranted) {
-      setState(() => _isRecording = true);
+      if (!mounted) return;
+      setState(() {
+        _isRecording = true;
+      });
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Gravando...'),
@@ -26,16 +39,49 @@ class _SpeakUpHomeScreenState extends State<SpeakUpHomeScreen> {
       );
 
       Future.delayed(const Duration(seconds: 3), () {
-        if (mounted) setState(() => _isRecording = false);
+        if (mounted) {
+          setState(() => _isRecording = false);
+        }
       });
     } else if (status.isPermanentlyDenied) {
       openAppSettings();
     } else {
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Permissão do microfone negada.')),
       );
     }
   }
+
+  @override
+  void initState() {
+    super.initState();
+    _loadLessons();
+    // ensure provider loads cached user data
+    Future.microtask(() => ref.read(userProvider.notifier).load());
+    _widgetOptions = <Widget>[
+      _buildActivitiesTabContent(),
+      const SettingsScreen(),
+    ];
+  }
+
+  Future<void> _loadLessons() async {
+    setState(() => _loadingLessons = true);
+    final svc = ContentService();
+    try {
+      final lessons = await svc.loadLessons();
+      if (!mounted) return;
+      setState(() {
+        _lessons = lessons;
+        _loadingLessons = false;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() => _loadingLessons = false);
+    }
+  }
+
+  // Drawer removed - settings moved to SettingsScreen (bottom tab)
 
   @override
   Widget build(BuildContext context) {
@@ -53,195 +99,91 @@ class _SpeakUpHomeScreenState extends State<SpeakUpHomeScreen> {
         elevation: 1,
         centerTitle: true,
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Primeiros passos',
-              style: GoogleFonts.lato(
-                fontSize: 22,
-                fontWeight: FontWeight.bold,
-                color: AppColors.primarySlate,
-              ),
-            ),
-            const SizedBox(height: 20),
-            _buildLessonCard(
-              title: 'Saudações',
-              subtitle: 'Pratique cumprimentos comuns.',
-              icon: Icons.waving_hand,
-              color: AppColors.primaryBlue,
-            ),
-            const Spacer(),
-            _buildPracticeCard(),
-            const SizedBox(height: 20),
-          ],
-        ),
+      body: Center(child: _widgetOptions.elementAt(_selectedIndex)),
+      bottomNavigationBar: BottomNavigationBar(
+        items: const [
+          BottomNavigationBarItem(
+            icon: Icon(Icons.list_alt),
+            label: 'Atividades',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.settings_outlined),
+            label: 'Configurações',
+          ),
+        ],
+        currentIndex: _selectedIndex,
+        onTap: _onItemTapped,
       ),
     );
   }
 
-  @override
-  void initState() {
-    super.initState();
-    _loadUserData();
+  void _onItemTapped(int index) {
+    setState(() {
+      _selectedIndex = index;
+    });
   }
 
-  Future<void> _loadUserData() async {
-    final svc = PersistenceService();
-    final name = await svc.getUserName();
-    final email = await svc.getUserEmail();
-    if (mounted) {
-      setState(() {
-        _userName = name;
-        _userEmail = email;
-      });
-    }
-  }
-
-  Drawer _buildAppDrawer() {
-    final displayName = _userName ?? 'Bem-vindo(a)!';
-    final displayEmail = _userEmail ?? 'Edite seu perfil';
-    final initial = (_userName?.isNotEmpty == true)
-        ? _userName!.trim()[0].toUpperCase()
-        : 'S';
-
-    return Drawer(
-      child: ListView(
-        padding: EdgeInsets.zero,
+  Widget _buildActivitiesTabContent() {
+    return Padding(
+      padding: const EdgeInsets.all(16.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          UserAccountsDrawerHeader(
-            accountName: Text(displayName),
-            accountEmail: Text(displayEmail),
-            currentAccountPicture: CircleAvatar(child: Text(initial)),
-            decoration: const BoxDecoration(color: AppColors.primarySlate),
-          ),
-          Tooltip(
-            message: 'Editar seu perfil',
-            child: ListTile(
-              leading: const Icon(Icons.edit),
-              title: const Text('Editar Perfil'),
-              subtitle: const Text('Atualize seu nome e e-mail'),
-              onTap: () async {
-                Navigator.of(context).pop();
-                final result = await Navigator.pushNamed(context, '/profile');
-                if (result == true) {
-                  await _loadUserData();
-                }
-              },
+          Text(
+            'Primeiros passos',
+            style: GoogleFonts.lato(
+              fontSize: 22,
+              fontWeight: FontWeight.bold,
+              color: AppColors.primarySlate,
             ),
           ),
-          Tooltip(
-            message: 'Gerenciar privacidade e consentimentos',
-            child: ListTile(
-              leading: const Icon(Icons.privacy_tip),
-              title: const Text('Privacidade & Consentimentos'),
-              subtitle: const Text('Gerenciar consentimentos e apagar dados'),
-              onTap: () {
-                Navigator.of(context).pop();
-                _showPrivacyDialog();
-              },
-            ),
+          const SizedBox(height: 20),
+          Expanded(
+            child: _loadingLessons
+                ? const Center(child: CircularProgressIndicator())
+                : _lessons.isEmpty
+                ? const Center(child: Text('Nenhuma lição disponível.'))
+                : ListView.separated(
+                    itemCount: _lessons.length,
+                    separatorBuilder: (_, __) => const SizedBox(height: 8),
+                    itemBuilder: (context, index) {
+                      final lesson = _lessons[index];
+                      return _buildLessonCard(lesson);
+                    },
+                  ),
           ),
+          const SizedBox(height: 12),
+          _buildPracticeCard(),
+          const SizedBox(height: 20),
         ],
       ),
     );
   }
 
-  Future<void> _showPrivacyDialog() async {
-    final svc = PersistenceService();
-    bool marketing = await svc.getMarketingConsent();
-    bool erasePII = false;
-
-    final result = await showDialog<bool>(
-      context: context,
-      builder: (context) {
-        return StatefulBuilder(
-          builder: (context, setState) {
-            return AlertDialog(
-              title: const Text('Privacidade & Consentimentos'),
-              content: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  CheckboxListTile(
-                    value: marketing,
-                    onChanged: (v) => setState(() => marketing = v ?? false),
-                    title: const Text('Consentimento de Marketing'),
-                  ),
-                  CheckboxListTile(
-                    value: erasePII,
-                    onChanged: (v) => setState(() => erasePII = v ?? false),
-                    title: const Text(
-                      'Apagar meus dados pessoais (Nome/E-mail)',
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  const Text(
-                    'Alterar estas opções irá revogar ou conceder o consentimento de marketing e/ou apagar apenas os dados pessoais locais.',
-                    style: TextStyle(fontSize: 12),
-                  ),
-                ],
-              ),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.pop(context, false),
-                  child: const Text('Cancelar'),
-                ),
-                ElevatedButton(
-                  onPressed: () async {
-                    // Apply changes
-                    if (marketing) {
-                      await svc.setMarketingConsent(true);
-                    } else {
-                      await svc.removeMarketingConsent();
-                    }
-                    if (erasePII) {
-                      await svc.removeUserData();
-                    }
-                    Navigator.pop(context, true);
-                  },
-                  child: const Text('Confirmar'),
-                ),
-              ],
-            );
-          },
-        );
-      },
-    );
-
-    if (result == true) {
-      await _loadUserData();
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Configurações de privacidade atualizadas.'),
-            backgroundColor: Colors.orange,
-          ),
-        );
-      }
-    }
-  }
-
-  Widget _buildLessonCard({
-    required String title,
-    required String subtitle,
-    required IconData icon,
-    required Color color,
-  }) {
+  Widget _buildLessonCard(Lesson lesson) {
     return Card(
       elevation: 2,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: ListTile(
         contentPadding: const EdgeInsets.all(16),
         leading: CircleAvatar(
-          backgroundColor: color,
-          child: Icon(icon, color: Colors.white),
+          backgroundColor: AppColors.primaryBlue,
+          child: const Icon(Icons.menu_book, color: Colors.white),
         ),
-        title: Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
-        subtitle: Text(subtitle),
+        title: Text(
+          lesson.title,
+          style: const TextStyle(fontWeight: FontWeight.bold),
+        ),
+        subtitle: Text(lesson.subtitle),
         trailing: const Icon(Icons.arrow_forward_ios, size: 16),
-        onTap: () {}, // Navegaria para a tela da lição
+        onTap: () {
+          Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (_) =>
+                  LessonScreen(lessonId: lesson.id, title: lesson.title),
+            ),
+          );
+        },
       ),
     );
   }

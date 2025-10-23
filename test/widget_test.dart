@@ -7,24 +7,30 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-
-import 'package:pprincipal/main.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:pprincipal/screens/splash_screen.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 void main() {
-  testWidgets('Counter increments smoke test', (WidgetTester tester) async {
-    // Build our app and trigger a frame.
-    await tester.pumpWidget(const MyApp());
+  TestWidgetsFlutterBinding.ensureInitialized();
 
-    // Verify that our counter starts at 0.
-    expect(find.text('0'), findsOneWidget);
-    expect(find.text('1'), findsNothing);
+  testWidgets('SplashScreen shows app title and icon', (
+    WidgetTester tester,
+  ) async {
+    // Provide mock SharedPreferences to avoid platform channel issues
+    SharedPreferences.setMockInitialValues({});
 
-    // Tap the '+' icon and trigger a frame.
-    await tester.tap(find.byIcon(Icons.add));
+    await tester.pumpWidget(
+      const ProviderScope(child: MaterialApp(home: SplashScreen())),
+    );
     await tester.pump();
 
-    // Verify that our counter has incremented.
-    expect(find.text('0'), findsNothing);
-    expect(find.text('1'), findsOneWidget);
+    // Verify splash content is present immediately
+    expect(find.text('SpeakUp'), findsOneWidget);
+    expect(find.byIcon(Icons.mic_rounded), findsOneWidget);
+
+    // Let the 2s splash delay run to completion so no timers remain pending
+    await tester.pump(const Duration(seconds: 3));
+    await tester.pumpAndSettle();
   });
 }

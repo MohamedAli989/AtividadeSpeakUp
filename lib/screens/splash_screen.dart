@@ -1,20 +1,20 @@
 // lib/screens/splash_screen.dart
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-import 'onboarding_screen.dart';
-import 'terms_screen.dart';
-import 'speakup_home_screen.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../providers/user_provider.dart';
+// Navigation uses named routes; individual screen imports not required here
+import '../services/persistence_service.dart';
 import '../utils/colors.dart';
 
-class SplashScreen extends StatefulWidget {
+class SplashScreen extends ConsumerStatefulWidget {
   const SplashScreen({super.key});
 
   @override
-  State<SplashScreen> createState() => _SplashScreenState();
+  ConsumerState<SplashScreen> createState() => _SplashScreenState();
 }
 
-class _SplashScreenState extends State<SplashScreen> {
+class _SplashScreenState extends ConsumerState<SplashScreen> {
   @override
   void initState() {
     super.initState();
@@ -22,27 +22,29 @@ class _SplashScreenState extends State<SplashScreen> {
   }
 
   Future<void> _checkFirstRun() async {
-    final prefs = await SharedPreferences.getInstance();
-    final bool seenOnboarding = prefs.getBool('seenOnboarding') ?? false;
-    final bool acceptedTerms = prefs.getBool('acceptedTerms') ?? false;
+    final seenOnboarding = await ref
+        .read(userProvider.notifier)
+        .getSeenOnboarding();
+    final acceptedTerms = await ref
+        .read(userProvider.notifier)
+        .getAcceptedTerms();
+    // ensure user provider loads cached data
+    await ref.read(userProvider.notifier).load();
+
+    // consult persistence directly for login state for safety
+    final loggedIn = await PersistenceService().isLoggedIn();
 
     // Aguarda um pouco para a splash screen ser visível
     await Future.delayed(const Duration(seconds: 2));
 
     if (!mounted) return;
 
-    Widget targetScreen;
-    if (!seenOnboarding) {
-      targetScreen = const OnboardingScreen();
-    } else if (!acceptedTerms) {
-      targetScreen = const TermsScreen();
-    } else {
-      targetScreen = const SpeakUpHomeScreen();
-    }
+    final targetRoute = !seenOnboarding
+        ? '/onboarding'
+        : (!acceptedTerms ? '/terms' : (!loggedIn ? '/login' : '/home'));
 
-    Navigator.of(
-      context,
-    ).pushReplacement(MaterialPageRoute(builder: (_) => targetScreen));
+    if (!mounted) return;
+    Navigator.of(context).pushReplacementNamed(targetRoute);
   }
 
   @override

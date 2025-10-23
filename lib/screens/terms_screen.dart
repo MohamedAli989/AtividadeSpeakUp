@@ -15,21 +15,26 @@ class _TermsScreenState extends State<TermsScreen> {
   bool _termsAccepted = false;
 
   Future<void> _acceptTerms() async {
+    final navigator = Navigator.of(context);
+    final messenger = ScaffoldMessenger.of(context);
+
     if (_termsAccepted) {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setBool('acceptedTerms', true);
-      if (!context.mounted) return;
-      Navigator.of(context).pushReplacement(
+      if (!mounted) return;
+      navigator.pushReplacement(
         MaterialPageRoute(builder: (_) => const SpeakUpHomeScreen()),
       );
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Você precisa aceitar os termos para continuar.'),
-          backgroundColor: Colors.red,
-        ),
-      );
+      return;
     }
+
+    if (!mounted) return;
+    messenger.showSnackBar(
+      const SnackBar(
+        content: Text('Você precisa aceitar os termos para continuar.'),
+        backgroundColor: Colors.red,
+      ),
+    );
   }
 
   @override

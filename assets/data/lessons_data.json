@@ -1,0 +1,14 @@
+{
+  "lessons": [
+    {
+      "id": "L1",
+      "title": "Saudações",
+      "subtitle": "Cumprimente as pessoas em inglês"
+    }
+  ],
+  "phrases": [
+    { "id": "P1", "text": "Hello", "lessonId": "L1" },
+    { "id": "P2", "text": "Hi, how are you?", "lessonId": "L1" },
+    { "id": "P3", "text": "Good morning", "lessonId": "L1" }
+  ]
+}
