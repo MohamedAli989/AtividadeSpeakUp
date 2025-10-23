@@ -82,6 +82,147 @@ class _SpeakUpHomeScreenState extends State<SpeakUpHomeScreen> {
     );
   }
 
+  @override
+  void initState() {
+    super.initState();
+    _loadUserData();
+  }
+
+  Future<void> _loadUserData() async {
+    final svc = PersistenceService();
+    final name = await svc.getUserName();
+    final email = await svc.getUserEmail();
+    if (mounted) {
+      setState(() {
+        _userName = name;
+        _userEmail = email;
+      });
+    }
+  }
+
+  Drawer _buildAppDrawer() {
+    final displayName = _userName ?? 'Bem-vindo(a)!';
+    final displayEmail = _userEmail ?? 'Edite seu perfil';
+    final initial = (_userName?.isNotEmpty == true)
+        ? _userName!.trim()[0].toUpperCase()
+        : 'S';
+
+    return Drawer(
+      child: ListView(
+        padding: EdgeInsets.zero,
+        children: [
+          UserAccountsDrawerHeader(
+            accountName: Text(displayName),
+            accountEmail: Text(displayEmail),
+            currentAccountPicture: CircleAvatar(child: Text(initial)),
+            decoration: const BoxDecoration(color: AppColors.primarySlate),
+          ),
+          Tooltip(
+            message: 'Editar seu perfil',
+            child: ListTile(
+              leading: const Icon(Icons.edit),
+              title: const Text('Editar Perfil'),
+              subtitle: const Text('Atualize seu nome e e-mail'),
+              onTap: () async {
+                Navigator.of(context).pop();
+                final result = await Navigator.pushNamed(context, '/profile');
+                if (result == true) {
+                  await _loadUserData();
+                }
+              },
+            ),
+          ),
+          Tooltip(
+            message: 'Gerenciar privacidade e consentimentos',
+            child: ListTile(
+              leading: const Icon(Icons.privacy_tip),
+              title: const Text('Privacidade & Consentimentos'),
+              subtitle: const Text('Gerenciar consentimentos e apagar dados'),
+              onTap: () {
+                Navigator.of(context).pop();
+                _showPrivacyDialog();
+              },
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _showPrivacyDialog() async {
+    final svc = PersistenceService();
+    bool marketing = await svc.getMarketingConsent();
+    bool erasePII = false;
+
+    final result = await showDialog<bool>(
+      context: context,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return AlertDialog(
+              title: const Text('Privacidade & Consentimentos'),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  CheckboxListTile(
+                    value: marketing,
+                    onChanged: (v) => setState(() => marketing = v ?? false),
+                    title: const Text('Consentimento de Marketing'),
+                  ),
+                  CheckboxListTile(
+                    value: erasePII,
+                    onChanged: (v) => setState(() => erasePII = v ?? false),
+                    title: const Text(
+                      'Apagar meus dados pessoais (Nome/E-mail)',
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  const Text(
+                    'Alterar estas opções irá revogar ou conceder o consentimento de marketing e/ou apagar apenas os dados pessoais locais.',
+                    style: TextStyle(fontSize: 12),
+                  ),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context, false),
+                  child: const Text('Cancelar'),
+                ),
+                ElevatedButton(
+                  onPressed: () async {
+                    // Apply changes
+                    if (marketing) {
+                      await svc.setMarketingConsent(true);
+                    } else {
+                      await svc.removeMarketingConsent();
+                    }
+                    if (erasePII) {
+                      await svc.removeUserData();
+                    }
+                    Navigator.pop(context, true);
+                  },
+                  child: const Text('Confirmar'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+
+    if (result == true) {
+      await _loadUserData();
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Configurações de privacidade atualizadas.'),
+            backgroundColor: Colors.orange,
+          ),
+        );
+      }
+    }
+  }
+
   Widget _buildLessonCard({
     required String title,
     required String subtitle,
