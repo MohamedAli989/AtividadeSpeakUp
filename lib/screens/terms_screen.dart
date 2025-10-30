@@ -1,7 +1,8 @@
 // lib/screens/terms_screen.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../providers/user_provider.dart';
+// user_provider not required here after moving terms acceptance to accepted_terms_provider
+import '../providers/accepted_terms_provider.dart';
 import '../utils/colors.dart';
 
 class TermsScreen extends StatefulWidget {
@@ -75,8 +76,8 @@ class _TermsBodyState extends ConsumerState<_TermsBody> {
               ? () async {
                   try {
                     await ref
-                        .read(userProvider.notifier)
-                        .setAcceptedTerms(true);
+                        .read(acceptedTermsProvider.notifier)
+                        .setAccepted(true);
                   } catch (e) {
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(content: Text('Erro ao salvar aceite: $e')),
