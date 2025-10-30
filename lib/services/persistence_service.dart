@@ -1,5 +1,6 @@
 // lib/services/persistence_service.dart
 import 'package:shared_preferences/shared_preferences.dart';
+import '../providers/user_dto.dart';
 
 class PersistenceService {
   // Existing keys kept for onboarding/terms
@@ -10,6 +11,7 @@ class PersistenceService {
   static const String _userNameKey = 'userName';
   static const String _userEmailKey = 'userEmail';
   static const String _userDescriptionKey = 'userDescription';
+  static const String _userDtoKey = 'userDto';
   static const String _marketingKey = 'acceptedMarketing';
   static const String _loggedInKey = 'isLoggedIn';
 
@@ -123,5 +125,23 @@ class PersistenceService {
   Future<void> removeUserDescription() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove(_userDescriptionKey);
+  }
+
+  // Full DTO (JSON) helpers
+  Future<void> setUserDto(UserDTO dto) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_userDtoKey, dto.toJson());
+  }
+
+  Future<UserDTO?> getUserDto() async {
+    final prefs = await SharedPreferences.getInstance();
+    final json = prefs.getString(_userDtoKey);
+    if (json == null) return null;
+    return UserDTO.fromJson(json);
+  }
+
+  Future<void> removeUserDto() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove(_userDtoKey);
   }
 }

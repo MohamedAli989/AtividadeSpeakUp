@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../services/persistence_service.dart';
+import 'provide_mapper.dart';
 
 /// Simple user model used across the app. Fields are nullable because
 /// the app allows anonymous / logged-out state.
@@ -35,6 +36,14 @@ class UserNotifier extends StateNotifier<User> {
 
   /// Load user fields from persistence into state.
   Future<void> load() async {
+    // Prefer reading a single UserDTO if present.
+    final dto = await _svc.getUserDto();
+    if (dto != null) {
+      state = ProvideMapper.fromDto(dto);
+      return;
+    }
+
+    // Fallback to legacy keys for compatibility.
     final name = await _svc.getUserName();
     final email = await _svc.getUserEmail();
     final description = await _svc.getUserDescription();
@@ -62,32 +71,36 @@ class UserNotifier extends StateNotifier<User> {
     required String name,
     required String email,
   }) async {
-    await _svc.setUserData(name: name, email: email);
     state = state.copyWith(name: name, email: email);
+    // Persist full DTO for consistency.
+    final dto = ProvideMapper.toDto(state);
+    await _svc.setUserDto(dto);
   }
 
   Future<void> setUserName(String name) async {
-    await _svc.setUserData(name: name, email: state.email ?? '');
     state = state.copyWith(name: name);
+    await _svc.setUserDto(ProvideMapper.toDto(state));
   }
 
   Future<void> setUserDescription(String? description) async {
-    await _svc.setUserDescription(description);
     state = state.copyWith(description: description);
+    await _svc.setUserDto(ProvideMapper.toDto(state));
   }
 
   Future<void> removeUserData() async {
     await _svc.removeUserData();
+    await _svc.removeUserDto();
     state = state.copyWith(name: null, email: null);
   }
 
   Future<void> setLoggedIn(bool value) async {
-    await _svc.setLoggedIn(value);
     state = state.copyWith(loggedIn: value);
+    await _svc.setUserDto(ProvideMapper.toDto(state));
   }
 
   Future<void> logout() async {
     await _svc.logout();
+    await _svc.removeUserDto();
     state = state.copyWith(loggedIn: false, name: null, email: null);
   }
 }
