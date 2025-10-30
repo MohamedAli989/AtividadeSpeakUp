@@ -21,7 +21,18 @@ void main() {
     SharedPreferences.setMockInitialValues({});
 
     await tester.pumpWidget(
-      const ProviderScope(child: MaterialApp(home: SplashScreen())),
+      ProviderScope(
+        child: MaterialApp(
+          home: SplashScreen(),
+          routes: {
+            '/onboarding': (context) =>
+                Scaffold(body: Center(child: Text('onboarding'))),
+            '/terms': (context) => Scaffold(body: Center(child: Text('terms'))),
+            '/login': (context) => Scaffold(body: Center(child: Text('login'))),
+            '/home': (context) => Scaffold(body: Center(child: Text('home'))),
+          },
+        ),
+      ),
     );
     await tester.pump();
 

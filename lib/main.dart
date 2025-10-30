@@ -12,7 +12,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  runApp(const MyApp());
+  runApp(const ProviderScope(child: MyApp()));
 }
 
 class MyApp extends StatelessWidget {
@@ -20,31 +20,28 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Provide Riverpod scope here so tests that directly pump MyApp() have it.
-    return ProviderScope(
-      child: MaterialApp(
-        title: 'SpeakUp App',
-        debugShowCheckedModeBanner: false,
-        theme: ThemeData(
-          textTheme: GoogleFonts.latoTextTheme(Theme.of(context).textTheme),
-          appBarTheme: const AppBarTheme(
-            backgroundColor: Colors.white,
-            foregroundColor: Colors.black,
-          ),
-          colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
-          useMaterial3: true,
+    return MaterialApp(
+      title: 'SpeakUp App',
+      debugShowCheckedModeBanner: false,
+      theme: ThemeData(
+        textTheme: GoogleFonts.latoTextTheme(Theme.of(context).textTheme),
+        appBarTheme: const AppBarTheme(
+          backgroundColor: Colors.white,
+          foregroundColor: Colors.black,
         ),
-        // O ponto de entrada do app agora é a nossa SplashScreen
-        home: const SplashScreen(),
-        routes: {
-          '/profile': (context) => const ProfilePage(),
-          '/home': (context) => const SpeakUpHomeScreen(),
-          '/privacy': (context) => const PrivacyScreen(),
-          '/terms': (context) => const TermsScreen(),
-          '/onboarding': (context) => const OnboardingScreen(),
-          '/login': (context) => const LoginScreen(),
-        },
+        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
+        useMaterial3: true,
       ),
+      // O ponto de entrada do app agora é a nossa SplashScreen
+      home: const SplashScreen(),
+      routes: {
+        '/profile': (context) => const ProfilePage(),
+        '/home': (context) => const SpeakUpHomeScreen(),
+        '/privacy': (context) => const PrivacyScreen(),
+        '/terms': (context) => const TermsScreen(),
+        '/onboarding': (context) => const OnboardingScreen(),
+        '/login': (context) => const LoginScreen(),
+      },
     );
   }
 }

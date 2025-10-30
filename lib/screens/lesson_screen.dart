@@ -17,10 +17,11 @@ class LessonScreen extends StatefulWidget {
 }
 
 class _LessonScreenState extends State<LessonScreen> {
-  final _recorder = Record();
-  String? _recordingPath;
+  // Audio recorder instance
+  final Record _audioRecorder = Record();
+  bool _isRecording = false; // control recording state
+  String? _audioPath; // last saved audio path
   String? _recordingPhraseId;
-  bool _isRecording = false;
   List<Phrase> _phrases = [];
   bool _loading = true;
 
@@ -43,43 +44,66 @@ class _LessonScreenState extends State<LessonScreen> {
     });
   }
 
-  Future<void> _toggleRecord(String phraseId) async {
-    if (_isRecording && _recordingPhraseId == phraseId) {
-      // stop
-      await _recorder.stop();
-      if (!mounted) return;
-      setState(() {
-        _isRecording = false;
-        _recordingPhraseId = null;
-      });
+  Future<void> _handleRecording(Phrase phrase) async {
+    final messenger = ScaffoldMessenger.of(context);
+
+    // If currently recording this phrase -> stop
+    if (_isRecording && _recordingPhraseId == phrase.id) {
+      try {
+        final savedPath = await _audioRecorder.stop();
+        if (!mounted) return;
+        setState(() {
+          _isRecording = false;
+          _recordingPhraseId = null;
+          _audioPath = savedPath;
+        });
+        messenger.showSnackBar(
+          SnackBar(
+            content: Text('Gravação salva em ${_audioPath ?? 'desconhecido'}'),
+          ),
+        );
+      } catch (e) {
+        if (!mounted) return;
+        messenger.showSnackBar(
+          const SnackBar(content: Text('Erro ao salvar gravação.')),
+        );
+      }
       return;
     }
 
-    // request permission
+    // Request permission using permission_handler
     final status = await Permission.microphone.request();
     if (!status.isGranted) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
+      messenger.showSnackBar(
         const SnackBar(content: Text('Permissão de microfone necessária.')),
       );
       return;
     }
 
-    final dir = await getTemporaryDirectory();
-    final filePath =
-        '${dir.path}/${widget.lessonId}_${phraseId}_${DateTime.now().millisecondsSinceEpoch}.m4a';
+    // Check Record permission (redundant but safe)
+    if (!await _audioRecorder.hasPermission()) {
+      if (!mounted) return;
+      messenger.showSnackBar(
+        const SnackBar(content: Text('Permissão do gravador negada.')),
+      );
+      return;
+    }
 
     try {
-      await _recorder.start(path: filePath, encoder: AudioEncoder.aacLc);
+      final directory = await getApplicationDocumentsDirectory();
+      final path =
+          '${directory.path}/recording_${phrase.id}_${DateTime.now().millisecondsSinceEpoch}.m4a';
+      await _audioRecorder.start(path: path, encoder: AudioEncoder.aacLc);
       if (!mounted) return;
       setState(() {
         _isRecording = true;
-        _recordingPhraseId = phraseId;
-        _recordingPath = filePath;
+        _recordingPhraseId = phrase.id;
+        _audioPath = path;
       });
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
+      messenger.showSnackBar(
         const SnackBar(content: Text('Erro ao iniciar gravação.')),
       );
     }
@@ -87,7 +111,7 @@ class _LessonScreenState extends State<LessonScreen> {
 
   @override
   void dispose() {
-    _recorder.dispose();
+    _audioRecorder.dispose();
     super.dispose();
   }
 
@@ -105,10 +129,8 @@ class _LessonScreenState extends State<LessonScreen> {
                     _isRecording && _recordingPhraseId == p.id;
                 return ListTile(
                   title: Text(p.text),
-                  subtitle: _recordingPath != null && _recordingPhraseId == p.id
-                      ? Text(
-                          'Última gravação: ${_recordingPath!.split('/').last}',
-                        )
+                  subtitle: _audioPath != null && _recordingPhraseId == p.id
+                      ? Text('Última gravação: ${_audioPath!.split('/').last}')
                       : null,
                   trailing: IconButton(
                     icon: Icon(
@@ -117,7 +139,7 @@ class _LessonScreenState extends State<LessonScreen> {
                           ? Colors.red
                           : AppColors.primaryViolet,
                     ),
-                    onPressed: () => _toggleRecord(p.id),
+                    onPressed: () => _handleRecording(p),
                   ),
                 );
               },

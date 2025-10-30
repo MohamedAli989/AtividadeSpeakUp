@@ -1,13 +1,15 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../services/persistence_service.dart';
 
+/// Simple user model used across the app. Fields are nullable because
+/// the app allows anonymous / logged-out state.
 class User {
   final String? name;
   final String? email;
   final String? description;
   final bool loggedIn;
 
-  User({this.name, this.email, this.description, this.loggedIn = false});
+  const User({this.name, this.email, this.description, this.loggedIn = false});
 
   User copyWith({
     String? name,
@@ -24,11 +26,14 @@ class User {
   }
 }
 
+/// StateNotifier that wraps PersistenceService and provides compatibility
+/// methods used by the existing screens/tests.
 class UserNotifier extends StateNotifier<User> {
-  final PersistenceService _svc = PersistenceService();
+  final PersistenceService _svc;
 
-  UserNotifier() : super(User(name: null, email: null, loggedIn: false));
+  UserNotifier(this._svc) : super(const User());
 
+  /// Load user fields from persistence into state.
   Future<void> load() async {
     final name = await _svc.getUserName();
     final email = await _svc.getUserEmail();
@@ -45,12 +50,14 @@ class UserNotifier extends StateNotifier<User> {
   // App-level helpers (onboarding / terms / marketing)
   Future<bool> getSeenOnboarding() => _svc.getSeenOnboarding();
   Future<bool> getAcceptedTerms() => _svc.getAcceptedTerms();
+  Future<void> setAcceptedTerms(bool value) => _svc.setAcceptedTerms(value);
 
   Future<bool> getMarketingConsent() => _svc.getMarketingConsent();
   Future<void> setMarketingConsent(bool value) =>
       _svc.setMarketingConsent(value);
   Future<void> removeMarketingConsent() => _svc.removeMarketingConsent();
 
+  /// Persist full user data and update state.
   Future<void> setUserData({
     required String name,
     required String email,
@@ -85,6 +92,7 @@ class UserNotifier extends StateNotifier<User> {
   }
 }
 
+/// Public provider instance used across the app.
 final userProvider = StateNotifierProvider<UserNotifier, User>((ref) {
-  return UserNotifier();
+  return UserNotifier(PersistenceService());
 });
