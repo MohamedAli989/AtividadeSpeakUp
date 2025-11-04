@@ -198,6 +198,8 @@ class UserNotifier extends StateNotifier<AsyncValue<UserState>> {
           currentStreak: 0,
           lastPracticeDate: DateTime.fromMillisecondsSinceEpoch(0),
           completedLessonIds: [],
+          achievedAchievementIds: [],
+          completedChallengeIds: [],
         );
 
     final updated = oldProgress.copyWith(
@@ -230,6 +232,8 @@ class UserNotifier extends StateNotifier<AsyncValue<UserState>> {
           currentStreak: 0,
           lastPracticeDate: DateTime.fromMillisecondsSinceEpoch(0),
           completedLessonIds: [],
+          achievedAchievementIds: [],
+          completedChallengeIds: [],
         );
 
     final newCompleted = List<String>.from(oldProgress.completedLessonIds);
