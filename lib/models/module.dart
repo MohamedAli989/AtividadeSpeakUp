@@ -1,26 +1,26 @@
-// lib/models/lesson.dart
-class Lesson {
+// lib/models/module.dart
+class Module {
   final String id;
   final String title;
-  final String subtitle;
+  final String description;
   final String languageId;
-  final String moduleId;
+  final int order;
 
-  Lesson({
+  const Module({
     required this.id,
     required this.title,
-    required this.subtitle,
+    required this.description,
     required this.languageId,
-    required this.moduleId,
+    required this.order,
   });
 
-  factory Lesson.fromJson(Map<String, dynamic> json) {
-    return Lesson(
+  factory Module.fromJson(Map<String, dynamic> json) {
+    return Module(
       id: json['id'] as String,
       title: json['title'] as String,
-      subtitle: json['subtitle'] as String? ?? '',
+      description: json['description'] as String? ?? '',
       languageId: json['languageId'] as String? ?? '',
-      moduleId: json['moduleId'] as String? ?? '',
+      order: (json['order'] as num?)?.toInt() ?? 0,
     );
   }
 
@@ -28,9 +28,9 @@ class Lesson {
     return {
       'id': id,
       'title': title,
-      'subtitle': subtitle,
+      'description': description,
       'languageId': languageId,
-      'moduleId': moduleId,
+      'order': order,
     };
   }
 }

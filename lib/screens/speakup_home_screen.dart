@@ -6,6 +6,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../utils/colors.dart';
 import '../services/content_service.dart';
 import '../models/lesson.dart';
+import '../models/module.dart';
+import '../models/daily_challenge.dart';
 import '../providers/user_provider.dart';
 import 'lesson_screen.dart';
 import 'settings_screen.dart';
@@ -19,8 +21,7 @@ class SpeakUpHomeScreen extends ConsumerStatefulWidget {
 
 class _SpeakUpHomeScreenState extends ConsumerState<SpeakUpHomeScreen> {
   bool _isRecording = false;
-  List<Lesson> _lessons = [];
-  bool _loadingLessons = true;
+  // Home data will be loaded via FutureBuilder in the activities tab.
   int _selectedIndex = 0;
   late final List<Widget> _widgetOptions;
 
@@ -56,7 +57,6 @@ class _SpeakUpHomeScreenState extends ConsumerState<SpeakUpHomeScreen> {
   @override
   void initState() {
     super.initState();
-    _loadLessons();
     // ensure provider loads cached user data
     Future.microtask(() => ref.read(userProvider.notifier).load());
     _widgetOptions = <Widget>[
@@ -65,20 +65,17 @@ class _SpeakUpHomeScreenState extends ConsumerState<SpeakUpHomeScreen> {
     ];
   }
 
-  Future<void> _loadLessons() async {
-    setState(() => _loadingLessons = true);
+  Future<Map<String, dynamic>> _fetchHomeData() async {
     final svc = ContentService();
-    try {
-      final lessons = await svc.loadLessons();
-      if (!mounted) return;
-      setState(() {
-        _lessons = lessons;
-        _loadingLessons = false;
-      });
-    } catch (_) {
-      if (!mounted) return;
-      setState(() => _loadingLessons = false);
-    }
+    final languages = await svc.loadLanguages();
+    final languageId = languages.isNotEmpty ? languages.first.id : '';
+    final modules = await svc.loadModules(languageId);
+    final challenge = await svc.getTodaysChallenge(languageId);
+    return {
+      'languageId': languageId,
+      'modules': modules,
+      'challenge': challenge,
+    };
   }
 
   // Drawer removed - settings moved to SettingsScreen (bottom tab)
@@ -139,18 +136,77 @@ class _SpeakUpHomeScreenState extends ConsumerState<SpeakUpHomeScreen> {
           ),
           const SizedBox(height: 20),
           Expanded(
-            child: _loadingLessons
-                ? const Center(child: CircularProgressIndicator())
-                : _lessons.isEmpty
-                ? const Center(child: Text('Nenhuma lição disponível.'))
-                : ListView.separated(
-                    itemCount: _lessons.length,
-                    separatorBuilder: (_, __) => const SizedBox(height: 8),
-                    itemBuilder: (context, index) {
-                      final lesson = _lessons[index];
-                      return _buildLessonCard(lesson);
-                    },
-                  ),
+            child: FutureBuilder<Map<String, dynamic>>(
+              future: _fetchHomeData(),
+              builder: (context, snapshot) {
+                if (snapshot.connectionState != ConnectionState.done) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+                if (snapshot.hasError) {
+                  return const Center(
+                    child: Text('Erro ao carregar atividades.'),
+                  );
+                }
+                final data = snapshot.data!;
+                final modules = data['modules'] as List<Module>? ?? [];
+                final DailyChallenge? challenge =
+                    data['challenge'] as DailyChallenge?;
+
+                if (modules.isEmpty) {
+                  return const Center(child: Text('Nenhuma lição disponível.'));
+                }
+
+                return ListView.separated(
+                  itemCount: modules.length + (challenge != null ? 1 : 0),
+                  separatorBuilder: (_, __) => const SizedBox(height: 8),
+                  itemBuilder: (context, index) {
+                    // If challenge exists, show it at top (index 0)
+                    if (challenge != null && index == 0) {
+                      return _buildDailyChallengeCard(challenge);
+                    }
+                    final moduleIndex = challenge != null ? index - 1 : index;
+                    final module = modules[moduleIndex];
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 8.0),
+                          child: Text(
+                            module.title,
+                            style: GoogleFonts.lato(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                        FutureBuilder<List<Lesson>>(
+                          future: ContentService().loadLessonsForModule(
+                            module.id,
+                          ),
+                          builder: (context, snap) {
+                            if (snap.connectionState != ConnectionState.done) {
+                              return const SizedBox(
+                                height: 48,
+                                child: Center(
+                                  child: CircularProgressIndicator(),
+                                ),
+                              );
+                            }
+                            final lessons = snap.data ?? [];
+                            if (lessons.isEmpty) return const SizedBox.shrink();
+                            return Column(
+                              children: lessons
+                                  .map((l) => _buildLessonCard(l))
+                                  .toList(),
+                            );
+                          },
+                        ),
+                      ],
+                    );
+                  },
+                );
+              },
+            ),
           ),
           const SizedBox(height: 12),
           _buildPracticeCard(),
@@ -222,6 +278,32 @@ class _SpeakUpHomeScreenState extends ConsumerState<SpeakUpHomeScreen> {
                 color: AppColors.textLight,
                 size: 30,
               ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDailyChallengeCard(DailyChallenge challenge) {
+    return Card(
+      color: Colors.orange.shade50,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: Padding(
+        padding: const EdgeInsets.all(12.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Desafio do dia',
+              style: GoogleFonts.lato(fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 8),
+            Text(challenge.title, style: GoogleFonts.lato(fontSize: 16)),
+            const SizedBox(height: 8),
+            Text(
+              'XP bônus: ${challenge.xpBonus}',
+              style: const TextStyle(color: Colors.black54),
             ),
           ],
         ),

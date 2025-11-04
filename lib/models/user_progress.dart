@@ -7,6 +7,8 @@ class UserProgress {
   final int currentStreak;
   final DateTime lastPracticeDate;
   final List<String> completedLessonIds;
+  final List<String> achievedAchievementIds;
+  final List<String> completedChallengeIds;
 
   const UserProgress({
     required this.userId,
@@ -14,6 +16,8 @@ class UserProgress {
     required this.currentStreak,
     required this.lastPracticeDate,
     required this.completedLessonIds,
+    required this.achievedAchievementIds,
+    required this.completedChallengeIds,
   });
 
   factory UserProgress.fromJson(Map<String, dynamic> json) {
@@ -34,6 +38,16 @@ class UserProgress {
             ?.map((e) => e as String)
             .toList() ??
         <String>[];
+    final achievements =
+        (json['achievedAchievementIds'] as List<dynamic>?)
+            ?.map((e) => e as String)
+            .toList() ??
+        <String>[];
+    final challenges =
+        (json['completedChallengeIds'] as List<dynamic>?)
+            ?.map((e) => e as String)
+            .toList() ??
+        <String>[];
 
     return UserProgress(
       userId: json['userId'] as String,
@@ -41,6 +55,8 @@ class UserProgress {
       currentStreak: (json['currentStreak'] as num?)?.toInt() ?? 0,
       lastPracticeDate: dt,
       completedLessonIds: list,
+      achievedAchievementIds: achievements,
+      completedChallengeIds: challenges,
     );
   }
 
@@ -51,6 +67,8 @@ class UserProgress {
       'currentStreak': currentStreak,
       'lastPracticeDate': Timestamp.fromDate(lastPracticeDate),
       'completedLessonIds': completedLessonIds,
+      'achievedAchievementIds': achievedAchievementIds,
+      'completedChallengeIds': completedChallengeIds,
     };
   }
 
@@ -60,6 +78,8 @@ class UserProgress {
     int? currentStreak,
     DateTime? lastPracticeDate,
     List<String>? completedLessonIds,
+    List<String>? achievedAchievementIds,
+    List<String>? completedChallengeIds,
   }) {
     return UserProgress(
       userId: userId ?? this.userId,
@@ -67,6 +87,10 @@ class UserProgress {
       currentStreak: currentStreak ?? this.currentStreak,
       lastPracticeDate: lastPracticeDate ?? this.lastPracticeDate,
       completedLessonIds: completedLessonIds ?? this.completedLessonIds,
+      achievedAchievementIds:
+          achievedAchievementIds ?? this.achievedAchievementIds,
+      completedChallengeIds:
+          completedChallengeIds ?? this.completedChallengeIds,
     );
   }
 }
