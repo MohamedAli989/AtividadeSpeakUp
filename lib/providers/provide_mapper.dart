@@ -3,8 +3,9 @@
 import 'user_dto.dart';
 import 'user_provider.dart';
 
-/// Mapper between domain `User` and serializable `UserDTO`.
-/// ProvideMapper centralizes conversion logic so persistence can work with DTOs.
+/// Mapper entre o domínio `User` e o `UserDTO` serializável.
+/// ProvideMapper centraliza a lógica de conversão para que a persistência
+/// trabalhe com DTOs.
 class ProvideMapper {
   static UserDTO toDto(User u) {
     return UserDTO(

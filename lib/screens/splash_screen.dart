@@ -3,7 +3,8 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/user_provider.dart';
-// Navigation uses named routes; individual screen imports not required here
+// A navegação usa rotas nomeadas; imports de telas individuais não são
+// necessários neste arquivo
 import '../services/persistence_service.dart';
 import '../utils/colors.dart';
 
@@ -28,10 +29,11 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
     final acceptedTerms = await ref
         .read(userProvider.notifier)
         .getAcceptedTerms();
-    // ensure user provider loads cached data
+    // garantir que o provider de usuário carregue os dados em cache
     await ref.read(userProvider.notifier).load();
 
-    // consult persistence directly for login state for safety
+    // consultar a persistência diretamente para o estado de login (por
+    // segurança)
     final loggedIn = await PersistenceService().isLoggedIn();
 
     // Aguarda um pouco para a splash screen ser visível

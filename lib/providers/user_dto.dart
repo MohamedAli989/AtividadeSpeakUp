@@ -1,9 +1,9 @@
 // lib/providers/user_dto.dart
 import 'dart:convert';
 
-/// Data Transfer Object for the user record persisted by the app.
+/// Data Transfer Object para o registro de usuário persistido pelo app.
 ///
-/// This DTO is intentionally lightweight and serializable to a Map/JSON.
+/// Este DTO é intencionalmente leve e serializável para Map/JSON.
 class UserDTO {
   final String? name;
   final String? email;

@@ -21,7 +21,7 @@ class SpeakUpHomeScreen extends ConsumerStatefulWidget {
 
 class _SpeakUpHomeScreenState extends ConsumerState<SpeakUpHomeScreen> {
   bool _isRecording = false;
-  // Home data will be loaded via FutureBuilder in the activities tab.
+  // Dados do home serão carregados via FutureBuilder na aba de atividades.
   int _selectedIndex = 0;
   late final List<Widget> _widgetOptions;
 
@@ -78,7 +78,8 @@ class _SpeakUpHomeScreenState extends ConsumerState<SpeakUpHomeScreen> {
     };
   }
 
-  // Drawer removed - settings moved to SettingsScreen (bottom tab)
+  // Drawer removido - configurações movidas para a SettingsScreen (aba
+  // inferior)
 
   @override
   Widget build(BuildContext context) {

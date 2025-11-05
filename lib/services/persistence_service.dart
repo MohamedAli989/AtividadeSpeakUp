@@ -3,11 +3,11 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../providers/user_dto.dart';
 
 class PersistenceService {
-  // Existing keys kept for onboarding/terms
+  // Chaves existentes mantidas para onboarding/terms
   static const String _onboardingKey = 'seenOnboarding';
   static const String _termsKey = 'acceptedTerms';
 
-  // New keys for user profile (PII) and marketing consent
+  // Novas chaves para perfil do usuário (PII) e consentimento de marketing
   static const String _userNameKey = 'userName';
   static const String _userEmailKey = 'userEmail';
   static const String _userDescriptionKey = 'userDescription';
@@ -26,7 +26,7 @@ class PersistenceService {
     return prefs.getBool(_onboardingKey) ?? false;
   }
 
-  // Terms
+  // Termos
   Future<void> setAcceptedTerms(bool value) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool(_termsKey, value);
@@ -37,7 +37,7 @@ class PersistenceService {
     return prefs.getBool(_termsKey) ?? false;
   }
 
-  // Profile (PII)
+  // Perfil (PII)
   Future<void> setUserData({
     required String name,
     required String email,
@@ -57,7 +57,7 @@ class PersistenceService {
     return prefs.getString(_userEmailKey);
   }
 
-  // Marketing consent
+  // Consentimento de marketing
   Future<void> setMarketingConsent(bool value) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool(_marketingKey, value);
@@ -68,34 +68,34 @@ class PersistenceService {
     return prefs.getBool(_marketingKey) ?? false;
   }
 
-  // Login state
+  // Estado de login
   Future<void> setLoggedIn(bool value) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool(_loggedInKey, value);
   }
 
-  /// Returns true if a logged-in flag exists and is true.
+  /// Retorna true se a flag de logged-in existir e for true.
   Future<bool> isLoggedIn() async {
     final prefs = await SharedPreferences.getInstance();
     return prefs.getBool(_loggedInKey) ?? false;
   }
 
-  /// Backwards-compatible alias used by older code/tests.
+  /// Alias compatível com versões anteriores usado por código/testes antigos.
   Future<bool> getLoggedIn() async => isLoggedIn();
 
-  /// Removes the persisted logged-in flag.
+  /// Remove a flag de logged-in persistida.
   Future<void> removeLoggedIn() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove(_loggedInKey);
   }
 
-  /// Convenience: clear user PII and mark logged out.
+  /// Conveniência: limpa PII do usuário e marca como deslogado.
   Future<void> logout() async {
     await removeUserData();
     await setLoggedIn(false);
   }
 
-  // Removal helpers - granular deletion only
+  // Helpers de remoção - remoção granular apenas
   Future<void> removeMarketingConsent() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove(_marketingKey);
@@ -107,7 +107,7 @@ class PersistenceService {
     await prefs.remove(_userEmailKey);
   }
 
-  // User description (optional)
+  // Descrição do usuário (opcional)
   Future<void> setUserDescription(String? description) async {
     final prefs = await SharedPreferences.getInstance();
     if (description == null) {
@@ -127,7 +127,7 @@ class PersistenceService {
     await prefs.remove(_userDescriptionKey);
   }
 
-  // Full DTO (JSON) helpers
+  // Helpers para DTO completo (JSON)
   Future<void> setUserDto(UserDTO dto) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_userDtoKey, dto.toJson());

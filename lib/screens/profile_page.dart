@@ -26,12 +26,12 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
 
   Future<void> _load() async {
     setState(() => _loading = true);
-    // Load via provider-backed persistence
+    // Carrega via persistência gerenciada pelo provider
     await ref.read(userProvider.notifier).load();
-    final user = ref.read(userProvider);
-    _nameController.text = user.name ?? '';
-    _emailController.text = user.email ?? '';
-    _descController.text = user.description ?? '';
+    final user = ref.read(currentUserProvider);
+    _nameController.text = user?.name ?? '';
+    _emailController.text = user?.email ?? '';
+    _descController.text = user?.description ?? '';
     if (mounted) setState(() => _loading = false);
   }
 

@@ -58,14 +58,15 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final user = ref.watch(userProvider);
+    final user = ref.watch(currentUserProvider);
 
+    // Mostra indicador de carregamento enquanto carrega perfil/local
     return _loading
         ? const Center(child: CircularProgressIndicator())
         : ListView(
             padding: const EdgeInsets.all(16),
             children: [
-              // Top footer area showing available tabs/pages
+              // Área superior indicando abas/páginas disponíveis
               Card(
                 color: Colors.grey.shade100,
                 child: Padding(
@@ -84,7 +85,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 ),
               ),
               const SizedBox(height: 12),
-              // Profile area inside Settings
+              // Área de perfil dentro de Configurações
               Card(
                 child: Padding(
                   padding: const EdgeInsets.all(12.0),
@@ -92,7 +93,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        user.name ?? 'Usuário',
+                        user?.name ?? 'Usuário',
                         style: const TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,

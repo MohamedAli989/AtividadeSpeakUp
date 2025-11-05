@@ -54,7 +54,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   }
 
   Future<void> _skipLogin() async {
-    // Prompt for a display name to make Test flow friendlier
+    // Solicita um nome de exibição para tornar o fluxo de teste mais
+    // amigável
     final name = await showDialog<String?>(
       context: context,
       builder: (context) {

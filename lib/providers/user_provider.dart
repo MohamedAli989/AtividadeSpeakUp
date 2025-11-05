@@ -4,8 +4,8 @@ import '../services/persistence_service.dart';
 import 'provide_mapper.dart';
 import '../models/user_progress.dart';
 
-/// Simple user model used across the app. Fields are nullable because
-/// the app allows anonymous / logged-out state.
+/// Modelo simples de usuário usado pelo app. Campos são nullable porque
+/// o app permite estado anônimo / deslogado.
 class User {
   final String? name;
   final String? email;
@@ -29,7 +29,7 @@ class User {
   }
 }
 
-/// Aggregated state container for the user profile and progress.
+/// Contêiner de estado agregado para o perfil do usuário e progresso.
 class UserState {
   final User? profile;
   final UserProgress? progress;
@@ -44,8 +44,8 @@ class UserState {
   }
 }
 
-/// StateNotifier that manages both profile and progress and persists
-/// progress to Firestore.
+/// StateNotifier que gerencia tanto o perfil quanto o progresso e persiste
+/// o progresso no Firestore.
 class UserNotifier extends StateNotifier<AsyncValue<UserState>> {
   final PersistenceService _svc;
 
@@ -53,10 +53,11 @@ class UserNotifier extends StateNotifier<AsyncValue<UserState>> {
     load();
   }
 
-  /// Load user and progress. Progress is loaded from Firestore when a
-  /// user identifier is available. Note: this implementation assumes the
-  /// user's email is used as the progress document id when no explicit
-  /// userId is stored. Adjust as needed to match your auth setup.
+  /// Carrega usuário e progresso. O progresso é carregado do Firestore quando
+  /// um identificador de usuário está disponível. Observação: esta
+  /// implementação assume que o e-mail do usuário é usado como id do
+  /// documento de progresso quando não há um userId explícito armazenado.
+  /// Ajuste conforme necessário para corresponder ao seu sistema de auth.
   Future<void> load() async {
     try {
       // Load persisted DTO or legacy fields
@@ -96,7 +97,8 @@ class UserNotifier extends StateNotifier<AsyncValue<UserState>> {
     }
   }
 
-  // App-level helpers (onboarding / terms / marketing) - delegate to persistence
+  // Helpers de nível de app (onboarding / termos / marketing) - delega para a
+  // camada de persistência
   Future<bool> getSeenOnboarding() => _svc.getSeenOnboarding();
   Future<bool> getAcceptedTerms() => _svc.getAcceptedTerms();
   Future<void> setAcceptedTerms(bool value) => _svc.setAcceptedTerms(value);
@@ -116,7 +118,7 @@ class UserNotifier extends StateNotifier<AsyncValue<UserState>> {
       name: name,
       email: email,
     );
-    // Persist full DTO for consistency.
+    // Persiste o DTO completo para consistência.
     final dto = ProvideMapper.toDto(updatedProfile);
     await _svc.setUserDto(dto);
     state = AsyncValue.data(
@@ -162,7 +164,10 @@ class UserNotifier extends StateNotifier<AsyncValue<UserState>> {
     final updated = (current?.profile ?? const User()).copyWith(
       loggedIn: value,
     );
+    // Persiste tanto o DTO quanto a flag legada de logged-in para
+    // compatibilidade com testes/versões antigas.
     await _svc.setUserDto(ProvideMapper.toDto(updated));
+    await _svc.setLoggedIn(value);
     state = AsyncValue.data(
       (current ?? const UserState()).copyWith(profile: updated),
     );
@@ -260,3 +265,9 @@ final userProvider = StateNotifierProvider<UserNotifier, AsyncValue<UserState>>(
     return UserNotifier(PersistenceService());
   },
 );
+
+/// Backwards-compatible provider that exposes the current User profile or null.
+final currentUserProvider = Provider<User?>((ref) {
+  final av = ref.watch(userProvider);
+  return av.maybeWhen(data: (s) => s.profile, orElse: () => null);
+});

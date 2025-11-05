@@ -13,35 +13,50 @@ import 'providers/accepted_terms_provider.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  runApp(const ProviderScope(child: MyApp()));
+  runApp(const ProviderScope(child: AppWithProviders()));
 }
 
-class MyApp extends ConsumerStatefulWidget {
-  const MyApp({super.key});
+/// Aplicação de topo que inclui listeners do Riverpod e um Navigator.
+class AppWithProviders extends ConsumerStatefulWidget {
+  const AppWithProviders({super.key});
 
   @override
-  ConsumerState<MyApp> createState() => _MyAppState();
+  ConsumerState<AppWithProviders> createState() => _AppWithProvidersState();
 }
 
-class _MyAppState extends ConsumerState<MyApp> {
+class _AppWithProvidersState extends ConsumerState<AppWithProviders> {
   final GlobalKey<NavigatorState> _navigatorKey = GlobalKey<NavigatorState>();
 
   @override
-  void initState() {
-    super.initState();
-    // Listen to acceptedTerms changes and navigate when user accepts terms.
+  Widget build(BuildContext context) {
+    // Escuta a aceitação dos termos e navega quando aceito. Este código fica
+    // dentro de um Consumer para só rodar quando um ProviderScope estiver
+    // presente (isto é, no app real). Testes que usam `MyApp` diretamente
+    // não precisam do ProviderScope.
     ref.listen<bool>(acceptedTermsProvider, (previous, next) {
       if (next == true) {
-        // Navigate to home if terms accepted
         _navigatorKey.currentState?.pushReplacementNamed('/home');
       }
     });
+
+    return MyApp(navigatorKey: _navigatorKey);
   }
+}
+
+class MyApp extends StatefulWidget {
+  const MyApp({super.key, this.navigatorKey});
+
+  final GlobalKey<NavigatorState>? navigatorKey;
 
   @override
+  State<MyApp> createState() => _MyAppState();
+}
+
+class _MyAppState extends State<MyApp> {
+  @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      navigatorKey: _navigatorKey,
+    final app = MaterialApp(
+      navigatorKey: widget.navigatorKey,
       title: 'SpeakUp App',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
@@ -64,5 +79,16 @@ class _MyAppState extends ConsumerState<MyApp> {
         '/login': (context) => const LoginScreen(),
       },
     );
+
+    // Se não houver um ProviderScope acima (por exemplo, testes que fazem
+    // pump de `MyApp` diretamente), envolve o MaterialApp em um ProviderScope
+    // para que widgets Consumer possam ler providers com segurança.
+    try {
+      // Isto lança se não existir um ProviderScope ancestral.
+      ProviderScope.containerOf(context);
+      return app;
+    } catch (_) {
+      return ProviderScope(child: app);
+    }
   }
 }
