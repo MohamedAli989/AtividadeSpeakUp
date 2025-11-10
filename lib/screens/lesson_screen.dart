@@ -3,20 +3,25 @@ import 'package:flutter/material.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:record/record.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:shimmer/shimmer.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../services/content_service.dart';
+import '../services/practice_service.dart';
+import '../models/practice_attempt.dart';
+import '../providers/user_provider.dart';
 import '../models/phrase.dart';
 import '../utils/colors.dart';
 
-class LessonScreen extends StatefulWidget {
+class LessonScreen extends ConsumerStatefulWidget {
   final String lessonId;
   final String title;
   const LessonScreen({super.key, required this.lessonId, required this.title});
 
   @override
-  State<LessonScreen> createState() => _LessonScreenState();
+  ConsumerState<LessonScreen> createState() => _LessonScreenState();
 }
 
-class _LessonScreenState extends State<LessonScreen> {
+class _LessonScreenState extends ConsumerState<LessonScreen> {
   // Audio recorder instance
   final Record _audioRecorder = Record();
   bool _isRecording = false; // control recording state
@@ -62,6 +67,51 @@ class _LessonScreenState extends State<LessonScreen> {
             content: Text('Gravação salva em ${_audioPath ?? 'desconhecido'}'),
           ),
         );
+        // Inicia a análise e salvamento da prática (assíncrono)
+        try {
+          messenger.showSnackBar(
+            const SnackBar(
+              content: Text('Analisando sua pronúncia...'),
+              duration: Duration(seconds: 2),
+            ),
+          );
+
+          final user = ref.read(currentUserProvider);
+          final userId = user?.email ?? 'anonymous';
+          final attempt = PracticeAttempt(
+            id: 'pa_${DateTime.now().millisecondsSinceEpoch}',
+            userId: userId,
+            phraseId: phrase.id,
+            lessonId: widget.lessonId,
+            audioUrl: _audioPath ?? '',
+            timestamp: DateTime.now(),
+          );
+
+          final feedback = await PracticeService().saveUserPractice(
+            attempt,
+            ref,
+          );
+          if (feedback != null) {
+            messenger.showSnackBar(
+              SnackBar(
+                content: Text(
+                  'Prática salva! Sua nota foi: ${feedback.overallScore.round()}%',
+                ),
+                backgroundColor: Colors.green,
+              ),
+            );
+          } else {
+            messenger.showSnackBar(
+              const SnackBar(
+                content: Text('Prática salva, mas a análise falhou.'),
+              ),
+            );
+          }
+        } catch (e) {
+          messenger.showSnackBar(
+            const SnackBar(content: Text('Erro ao processar a análise.')),
+          );
+        }
       } catch (e) {
         if (!mounted) return;
         messenger.showSnackBar(
@@ -115,12 +165,34 @@ class _LessonScreenState extends State<LessonScreen> {
     super.dispose();
   }
 
+  Widget _construirCarregamentoShimmer() {
+    return ListView.builder(
+      itemCount: 5,
+      itemBuilder: (context, index) {
+        return Padding(
+          padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
+          child: Shimmer.fromColors(
+            baseColor: Colors.grey.shade300,
+            highlightColor: Colors.grey.shade100,
+            child: Container(
+              height: 48,
+              decoration: BoxDecoration(
+                color: Colors.grey,
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: Text(widget.title)),
       body: _loading
-          ? const Center(child: CircularProgressIndicator())
+          ? _construirCarregamentoShimmer()
           : ListView.builder(
               itemCount: _phrases.length,
               itemBuilder: (context, index) {

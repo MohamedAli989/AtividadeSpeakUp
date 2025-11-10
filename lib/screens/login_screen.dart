@@ -15,7 +15,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
-  bool _isLoading = false;
+  bool _estaCarregando = false;
 
   @override
   void initState() {
@@ -45,11 +45,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
   Future<void> _login() async {
     if (!_formKey.currentState!.validate()) return;
-    setState(() => _isLoading = true);
+    setState(() => _estaCarregando = true);
     await Future.delayed(const Duration(seconds: 2));
     await ref.read(userProvider.notifier).setLoggedIn(true);
     if (!mounted) return;
-    setState(() => _isLoading = false);
+    setState(() => _estaCarregando = false);
     Navigator.of(context).pushReplacementNamed('/home');
   }
 
@@ -145,13 +145,18 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           width: double.infinity,
                           height: 48,
                           child: ElevatedButton.icon(
-                            onPressed: _isLoading ? null : _login,
-                            icon: _isLoading
+                            onPressed: _estaCarregando ? null : _login,
+                            icon: _estaCarregando
                                 ? const SizedBox.shrink()
                                 : const Icon(Icons.login),
-                            label: _isLoading
-                                ? const CircularProgressIndicator(
-                                    color: Colors.white,
+                            label: _estaCarregando
+                                ? const SizedBox(
+                                    width: 20,
+                                    height: 20,
+                                    child: CircularProgressIndicator(
+                                      color: Colors.white,
+                                      strokeWidth: 2,
+                                    ),
                                   )
                                 : const Text(
                                     'Entrar',

@@ -1,7 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pprincipal/providers/user_provider.dart';
 import 'package:pprincipal/providers/provide_mapper.dart';
-import 'package:pprincipal/providers/user_dto.dart';
 
 void main() {
   test('ProvideMapper maps User <-> UserDTO', () {

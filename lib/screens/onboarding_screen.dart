@@ -1,19 +1,73 @@
 // lib/screens/onboarding_screen.dart
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:dots_indicator/dots_indicator.dart';
 import 'terms_screen.dart';
 import '../utils/colors.dart';
 
-class OnboardingScreen extends StatelessWidget {
+class OnboardingScreen extends StatefulWidget {
   const OnboardingScreen({super.key});
 
-  Future<void> _completeOnboarding(BuildContext context) async {
+  @override
+  State<OnboardingScreen> createState() => _OnboardingScreenState();
+}
+
+class _OnboardingScreenState extends State<OnboardingScreen> {
+  final PageController _pageController = PageController();
+  double _paginaAtual = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _pageController.addListener(() {
+      setState(() {
+        _paginaAtual = _pageController.page ?? 0;
+      });
+    });
+  }
+
+  @override
+  void dispose() {
+    _pageController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _completarOnboarding() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool('seenOnboarding', true);
-    if (!context.mounted) return;
+    if (!mounted) return;
     Navigator.of(
       context,
     ).pushReplacement(MaterialPageRoute(builder: (_) => const TermsScreen()));
+  }
+
+  Widget _construirPaginaOnboarding(
+    String titulo,
+    String subtitulo,
+    IconData icone,
+  ) {
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Icon(icone, color: AppColors.primaryViolet, size: 100),
+        const SizedBox(height: 40),
+        Text(
+          titulo,
+          textAlign: TextAlign.center,
+          style: const TextStyle(
+            fontSize: 28,
+            fontWeight: FontWeight.bold,
+            color: AppColors.primarySlate,
+          ),
+        ),
+        const SizedBox(height: 16),
+        Text(
+          subtitulo,
+          textAlign: TextAlign.center,
+          style: const TextStyle(fontSize: 18, color: Colors.black54),
+        ),
+      ],
+    );
   }
 
   @override
@@ -21,35 +75,39 @@ class OnboardingScreen extends StatelessWidget {
     return Scaffold(
       backgroundColor: AppColors.background,
       body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(24.0),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Spacer(),
-              const Icon(
-                Icons.translate,
-                color: AppColors.primaryViolet,
-                size: 100,
+        child: Column(
+          children: [
+            Expanded(
+              child: PageView(
+                controller: _pageController,
+                children: [
+                  _construirPaginaOnboarding(
+                    'Bem-vindo ao SpeakUp!',
+                    'Treine sua fala e melhore sua pronúncia com frases guiadas.',
+                    Icons.translate,
+                  ),
+                  _construirPaginaOnboarding(
+                    'Como Funciona?',
+                    '1. Oiça. 2. Grave. 3. Receba feedback.',
+                    Icons.hearing,
+                  ),
+                  _construirPaginaOnboarding(
+                    'Crie uma meta!',
+                    'Pratique 10 minutos por dia.',
+                    Icons.flag,
+                  ),
+                ],
               ),
-              const SizedBox(height: 40),
-              const Text(
-                'Bem-vindo ao SpeakUp!',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 28,
-                  fontWeight: FontWeight.bold,
-                  color: AppColors.primarySlate,
-                ),
-              ),
-              const SizedBox(height: 16),
-              const Text(
-                'Treine sua fala e melhore sua pronúncia com frases guiadas.',
-                textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 18, color: Colors.black54),
-              ),
-              const Spacer(),
-              ElevatedButton(
+            ),
+            DotsIndicator(
+              dotsCount: 3,
+              position: _paginaAtual,
+              decorator: DotsDecorator(activeColor: AppColors.primaryBlue),
+            ),
+            const SizedBox(height: 20),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24.0),
+              child: ElevatedButton(
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.primaryBlue,
                   minimumSize: const Size(double.infinity, 50),
@@ -57,15 +115,27 @@ class OnboardingScreen extends StatelessWidget {
                     borderRadius: BorderRadius.circular(12),
                   ),
                 ),
-                onPressed: () => _completeOnboarding(context),
-                child: const Text(
-                  'Começar',
-                  style: TextStyle(fontSize: 18, color: AppColors.textLight),
+                onPressed: () {
+                  if (_paginaAtual < 2) {
+                    _pageController.nextPage(
+                      duration: const Duration(milliseconds: 300),
+                      curve: Curves.easeIn,
+                    );
+                  } else {
+                    _completarOnboarding();
+                  }
+                },
+                child: Text(
+                  _paginaAtual < 2 ? 'Continuar' : 'Finalizar',
+                  style: const TextStyle(
+                    fontSize: 18,
+                    color: AppColors.textLight,
+                  ),
                 ),
               ),
-              const SizedBox(height: 20),
-            ],
-          ),
+            ),
+            const SizedBox(height: 20),
+          ],
         ),
       ),
     );

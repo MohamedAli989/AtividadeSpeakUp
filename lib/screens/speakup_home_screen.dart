@@ -3,11 +3,12 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shimmer/shimmer.dart';
+
 import '../utils/colors.dart';
 import '../services/content_service.dart';
 import '../models/lesson.dart';
 import '../models/module.dart';
-import '../models/daily_challenge.dart';
 import '../providers/user_provider.dart';
 import 'lesson_screen.dart';
 import 'settings_screen.dart';
@@ -70,12 +71,7 @@ class _SpeakUpHomeScreenState extends ConsumerState<SpeakUpHomeScreen> {
     final languages = await svc.loadLanguages();
     final languageId = languages.isNotEmpty ? languages.first.id : '';
     final modules = await svc.loadModules(languageId);
-    final challenge = await svc.getTodaysChallenge(languageId);
-    return {
-      'languageId': languageId,
-      'modules': modules,
-      'challenge': challenge,
-    };
+    return {'languageId': languageId, 'modules': modules};
   }
 
   // Drawer removido - configurações movidas para a SettingsScreen (aba
@@ -121,14 +117,37 @@ class _SpeakUpHomeScreenState extends ConsumerState<SpeakUpHomeScreen> {
     });
   }
 
+  Widget _construirCarregamentoShimmer() {
+    return Column(
+      children: List.generate(3, (index) {
+        return Padding(
+          padding: const EdgeInsets.symmetric(vertical: 8.0),
+          child: Shimmer.fromColors(
+            baseColor: Colors.grey.shade300,
+            highlightColor: Colors.grey.shade100,
+            child: Container(
+              height: 48,
+              decoration: BoxDecoration(
+                color: Colors.grey,
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+          ),
+        );
+      }),
+    );
+  }
+
   Widget _buildActivitiesTabContent() {
     return Padding(
       padding: const EdgeInsets.all(16.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          _buildPracticeCard(),
+          const SizedBox(height: 20),
           Text(
-            'Primeiros passos',
+            'Próximas Lições',
             style: GoogleFonts.lato(
               fontSize: 22,
               fontWeight: FontWeight.bold,
@@ -141,7 +160,7 @@ class _SpeakUpHomeScreenState extends ConsumerState<SpeakUpHomeScreen> {
               future: _fetchHomeData(),
               builder: (context, snapshot) {
                 if (snapshot.connectionState != ConnectionState.done) {
-                  return const Center(child: CircularProgressIndicator());
+                  return _construirCarregamentoShimmer();
                 }
                 if (snapshot.hasError) {
                   return const Center(
@@ -150,23 +169,15 @@ class _SpeakUpHomeScreenState extends ConsumerState<SpeakUpHomeScreen> {
                 }
                 final data = snapshot.data!;
                 final modules = data['modules'] as List<Module>? ?? [];
-                final DailyChallenge? challenge =
-                    data['challenge'] as DailyChallenge?;
 
                 if (modules.isEmpty) {
                   return const Center(child: Text('Nenhuma lição disponível.'));
                 }
 
-                return ListView.separated(
-                  itemCount: modules.length + (challenge != null ? 1 : 0),
-                  separatorBuilder: (_, __) => const SizedBox(height: 8),
+                return ListView.builder(
+                  itemCount: modules.length,
                   itemBuilder: (context, index) {
-                    // If challenge exists, show it at top (index 0)
-                    if (challenge != null && index == 0) {
-                      return _buildDailyChallengeCard(challenge);
-                    }
-                    final moduleIndex = challenge != null ? index - 1 : index;
-                    final module = modules[moduleIndex];
+                    final module = modules[index];
                     return Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -174,10 +185,7 @@ class _SpeakUpHomeScreenState extends ConsumerState<SpeakUpHomeScreen> {
                           padding: const EdgeInsets.symmetric(vertical: 8.0),
                           child: Text(
                             module.title,
-                            style: GoogleFonts.lato(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                            ),
+                            style: Theme.of(context).textTheme.headlineSmall,
                           ),
                         ),
                         FutureBuilder<List<Lesson>>(
@@ -186,12 +194,7 @@ class _SpeakUpHomeScreenState extends ConsumerState<SpeakUpHomeScreen> {
                           ),
                           builder: (context, snap) {
                             if (snap.connectionState != ConnectionState.done) {
-                              return const SizedBox(
-                                height: 48,
-                                child: Center(
-                                  child: CircularProgressIndicator(),
-                                ),
-                              );
+                              return _construirCarregamentoShimmer();
                             }
                             final lessons = snap.data ?? [];
                             if (lessons.isEmpty) return const SizedBox.shrink();
@@ -209,9 +212,6 @@ class _SpeakUpHomeScreenState extends ConsumerState<SpeakUpHomeScreen> {
               },
             ),
           ),
-          const SizedBox(height: 12),
-          _buildPracticeCard(),
-          const SizedBox(height: 20),
         ],
       ),
     );
@@ -279,32 +279,6 @@ class _SpeakUpHomeScreenState extends ConsumerState<SpeakUpHomeScreen> {
                 color: AppColors.textLight,
                 size: 30,
               ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildDailyChallengeCard(DailyChallenge challenge) {
-    return Card(
-      color: Colors.orange.shade50,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: Padding(
-        padding: const EdgeInsets.all(12.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Desafio do dia',
-              style: GoogleFonts.lato(fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 8),
-            Text(challenge.title, style: GoogleFonts.lato(fontSize: 16)),
-            const SizedBox(height: 8),
-            Text(
-              'XP bônus: ${challenge.xpBonus}',
-              style: const TextStyle(color: Colors.black54),
             ),
           ],
         ),

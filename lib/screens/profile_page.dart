@@ -15,29 +15,29 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
   final _nameController = TextEditingController();
   final _emailController = TextEditingController();
   final _descController = TextEditingController();
-  bool _loading = true;
-  bool _saving = false;
+  bool _estaCarregando = true;
+  bool _salvando = false;
 
   @override
   void initState() {
     super.initState();
-    _load();
+    _carregarDadosUsuario();
   }
 
-  Future<void> _load() async {
-    setState(() => _loading = true);
+  Future<void> _carregarDadosUsuario() async {
+    setState(() => _estaCarregando = true);
     // Carrega via persistência gerenciada pelo provider
     await ref.read(userProvider.notifier).load();
     final user = ref.read(currentUserProvider);
     _nameController.text = user?.name ?? '';
     _emailController.text = user?.email ?? '';
     _descController.text = user?.description ?? '';
-    if (mounted) setState(() => _loading = false);
+    if (mounted) setState(() => _estaCarregando = false);
   }
 
-  Future<void> _save() async {
+  Future<void> _salvarPerfil() async {
     if (!_formKey.currentState!.validate()) return;
-    setState(() => _saving = true);
+    setState(() => _salvando = true);
     await ref
         .read(userProvider.notifier)
         .setUserData(
@@ -48,7 +48,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
         .read(userProvider.notifier)
         .setUserDescription(_descController.text.trim());
     if (!mounted) return;
-    setState(() => _saving = false);
+    setState(() => _salvando = false);
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
         content: Text('Perfil salvo com sucesso!'),
@@ -82,7 +82,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('Editar Perfil')),
-      body: _loading
+      body: _estaCarregando
           ? const Center(child: CircularProgressIndicator())
           : SingleChildScrollView(
               padding: const EdgeInsets.all(16.0),
@@ -127,10 +127,15 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
                       width: double.infinity,
                       height: 48,
                       child: ElevatedButton(
-                        onPressed: _saving ? null : _save,
-                        child: _saving
-                            ? const CircularProgressIndicator(
-                                color: Colors.white,
+                        onPressed: _salvando ? null : _salvarPerfil,
+                        child: _salvando
+                            ? const SizedBox(
+                                width: 20,
+                                height: 20,
+                                child: CircularProgressIndicator(
+                                  color: Colors.white,
+                                  strokeWidth: 2,
+                                ),
                               )
                             : const Text('Salvar'),
                       ),
