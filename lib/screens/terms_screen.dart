@@ -28,7 +28,7 @@ class _TermsScreenState extends State<TermsScreen> {
 }
 
 class _TermsBody extends ConsumerStatefulWidget {
-  const _TermsBody({Key? key}) : super(key: key);
+  const _TermsBody({super.key});
 
   @override
   ConsumerState<_TermsBody> createState() => _TermsBodyState();
