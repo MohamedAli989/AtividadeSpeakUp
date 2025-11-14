@@ -1,7 +1,7 @@
 // lib/providers/provide_mapper.dart
 
-import 'user_dto.dart';
-import 'user_provider.dart';
+import 'package:pprincipal/providers/user_dto.dart';
+import 'package:pprincipal/features/4_profile/presentation/providers/user_provider.dart';
 
 /// Mapper entre o domínio `User` e o `UserDTO` serializável.
 /// ProvideMapper centraliza a lógica de conversão para que a persistência

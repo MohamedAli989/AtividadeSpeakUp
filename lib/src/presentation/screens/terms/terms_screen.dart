@@ -55,20 +55,20 @@ class _TermsScreenCleanState extends ConsumerState<TermsScreenClean> {
               ),
               onPressed: _termsAccepted
                   ? () async {
+                      final messenger = ScaffoldMessenger.of(context);
                       final setTerms = ref.read(
                         setTermsAcceptedUsecaseProvider,
                       );
                       try {
                         await setTerms.call(true);
                       } catch (e) {
-                        ScaffoldMessenger.of(context).showSnackBar(
+                        messenger.showSnackBar(
                           SnackBar(content: Text('Erro ao salvar aceite: $e')),
                         );
                         return;
                       }
 
-                      if (!mounted) return;
-                      ScaffoldMessenger.of(context).showSnackBar(
+                      messenger.showSnackBar(
                         const SnackBar(
                           content: Text('Termos aceitos com sucesso.'),
                         ),
