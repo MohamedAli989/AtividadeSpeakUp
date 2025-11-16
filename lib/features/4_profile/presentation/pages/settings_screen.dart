@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:pprincipal/services/persistence_service.dart';
 import 'package:pprincipal/providers/user_provider.dart';
 import 'package:pprincipal/features/4_profile/presentation/pages/profile_page.dart';
+import 'package:pprincipal/features/4_profile/presentation/providers/user_settings_notifier.dart';
 
 class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({super.key});
@@ -81,6 +82,106 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 ),
               ),
               const SizedBox(height: 12),
+              // Configurações do utilizador: meta diária e idioma
+              Builder(
+                builder: (context) {
+                  final userLocal = ref.watch(currentUserProvider);
+                  final userId = userLocal?.email ?? '';
+                  final settingsAsync = ref.watch(
+                    userSettingsNotifierProvider(userId),
+                  );
+                  return settingsAsync.when(
+                    loading: () => const Padding(
+                      padding: EdgeInsets.symmetric(vertical: 12.0),
+                      child: Center(child: CircularProgressIndicator()),
+                    ),
+                    error: (e, st) => Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 12.0),
+                      child: Text('Erro ao carregar configurações: $e'),
+                    ),
+                    data: (configuracoes) {
+                      return Card(
+                        child: Padding(
+                          padding: const EdgeInsets.all(12.0),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text(
+                                'Preferências',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              Text(
+                                'Meta diária: ${configuracoes.metaDiariaMinutos} minutos',
+                              ),
+                              Slider(
+                                value: configuracoes.metaDiariaMinutos
+                                    .toDouble(),
+                                min: 0,
+                                max: 180,
+                                divisions: 36,
+                                label: '${configuracoes.metaDiariaMinutos} min',
+                                onChanged: (v) async {
+                                  final nova = configuracoes.copyWith(
+                                    metaDiariaMinutos: v.round(),
+                                  );
+                                  await ref
+                                      .read(
+                                        userSettingsNotifierProvider(
+                                          userId,
+                                        ).notifier,
+                                      )
+                                      .salvar(nova);
+                                },
+                              ),
+                              const SizedBox(height: 8),
+                              Row(
+                                children: [
+                                  const Text('Idioma ativo:'),
+                                  const SizedBox(width: 12),
+                                  DropdownButton<String>(
+                                    value: configuracoes.idiomaAtivoId,
+                                    items: const [
+                                      DropdownMenuItem(
+                                        value: 'en-US',
+                                        child: Text('English'),
+                                      ),
+                                      DropdownMenuItem(
+                                        value: 'pt-BR',
+                                        child: Text('Português'),
+                                      ),
+                                      DropdownMenuItem(
+                                        value: 'es-ES',
+                                        child: Text('Español'),
+                                      ),
+                                    ],
+                                    onChanged: (v) async {
+                                      if (v == null) return;
+                                      final nova = configuracoes.copyWith(
+                                        idiomaAtivoId: v,
+                                      );
+                                      await ref
+                                          .read(
+                                            userSettingsNotifierProvider(
+                                              userId,
+                                            ).notifier,
+                                          )
+                                          .salvar(nova);
+                                    },
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
+                    },
+                  );
+                },
+              ),
               Card(
                 child: Padding(
                   padding: const EdgeInsets.all(12.0),

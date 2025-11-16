@@ -12,6 +12,8 @@ import 'package:pprincipal/models/module.dart';
 import 'package:pprincipal/providers/user_provider.dart';
 import 'package:pprincipal/features/3_content/presentation/pages/lesson_screen.dart';
 import 'package:pprincipal/features/4_profile/presentation/pages/settings_screen.dart';
+import 'package:pprincipal/features/5_notifications/presentation/providers/notification_provider.dart';
+import 'package:pprincipal/features/5_notifications/presentation/pages/notifications_list_page.dart';
 
 class SpeakUpHomeScreen extends ConsumerStatefulWidget {
   const SpeakUpHomeScreen({super.key});
@@ -84,6 +86,71 @@ class _SpeakUpHomeScreenState extends ConsumerState<SpeakUpHomeScreen> {
         backgroundColor: Colors.white,
         elevation: 1,
         centerTitle: true,
+        actions: [
+          Builder(
+            builder: (context) {
+              final user = ref.watch(currentUserProvider);
+              final userId = user?.email ?? '';
+              final contagemAsync = ref.watch(
+                notificacoesNaoLidasProvider(userId),
+              );
+              return IconButton(
+                onPressed: () {
+                  if (userId.isEmpty) return;
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => NotificationsListPage(userId: userId),
+                    ),
+                  );
+                },
+                icon: Stack(
+                  clipBehavior: Clip.none,
+                  children: [
+                    const Icon(Icons.notifications_outlined),
+                    Positioned(
+                      right: -6,
+                      top: -6,
+                      child: contagemAsync.maybeWhen(
+                        data: (c) => c > 0
+                            ? Container(
+                                padding: const EdgeInsets.all(4),
+                                decoration: BoxDecoration(
+                                  color: Colors.red,
+                                  shape: BoxShape.circle,
+                                ),
+                                constraints: const BoxConstraints(
+                                  minWidth: 20,
+                                  minHeight: 20,
+                                ),
+                                child: Center(
+                                  child: Text(
+                                    c.toString(),
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 12,
+                                    ),
+                                  ),
+                                ),
+                              )
+                            : const SizedBox.shrink(),
+                        orElse: () => const SizedBox.shrink(),
+                        loading: () => Container(
+                          width: 12,
+                          height: 12,
+                          decoration: const BoxDecoration(
+                            color: Colors.grey,
+                            shape: BoxShape.circle,
+                          ),
+                        ),
+                        error: (_, __) => const SizedBox.shrink(),
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            },
+          ),
+        ],
       ),
       body: Center(child: _widgetOptions.elementAt(_selectedIndex)),
       bottomNavigationBar: BottomNavigationBar(
