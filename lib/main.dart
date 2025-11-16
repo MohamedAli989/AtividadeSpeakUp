@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'screens/splash_screen.dart';
 import 'screens/profile_page.dart';
+import 'features/4_profile/presentation/pages/user_settings_page.dart';
 import 'screens/speakup_home_screen.dart';
 import 'screens/login_screen.dart';
 import 'screens/privacy_screen.dart';
@@ -13,30 +14,28 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'providers/accepted_terms_provider.dart';
 
 void main() async {
-  WidgetsFlutterBinding.ensureInitialized();
-
-  // Capture uncaught errors from the platform (engine) and report them to
-  // the console so we can correlate them with the DebugService messages.
-  WidgetsBinding.instance.platformDispatcher.onError =
-      (Object error, StackTrace? stack) {
-        // Print a clear marker so logs are easy to grep.
-        debugPrint('UNCAUGHT PLATFORM ERROR: $error\n$stack');
-        // Returning true indicates the error was handled.
-        return true;
-      };
-
-  // Forward Flutter framework errors to console as well.
-  FlutterError.onError = (FlutterErrorDetails details) {
-    FlutterError.presentError(details);
-    debugPrint(
-      'UNCAUGHT FLUTTER ERROR: ${details.exceptionAsString()}\n${details.stack}',
-    );
-  };
-
-  // Wrap the app in runZonedGuarded to catch asynchronous errors not handled
-  // by the framework. This will log the exception and stacktrace.
+  // Wrap the app in runZonedGuarded so that bindings and runApp happen in the
+  // same zone. Call ensureInitialized and set error handlers inside the zone.
   runZonedGuarded<Future<void>>(
     () async {
+      WidgetsFlutterBinding.ensureInitialized();
+
+      // Capture uncaught errors from the platform (engine) and report them to
+      // the console so we can correlate them with the DebugService messages.
+      WidgetsBinding.instance.platformDispatcher.onError =
+          (Object error, StackTrace? stack) {
+            debugPrint('UNCAUGHT PLATFORM ERROR: $error\n$stack');
+            return true;
+          };
+
+      // Forward Flutter framework errors to console as well.
+      FlutterError.onError = (FlutterErrorDetails details) {
+        FlutterError.presentError(details);
+        debugPrint(
+          'UNCAUGHT FLUTTER ERROR: ${details.exceptionAsString()}\n${details.stack}',
+        );
+      };
+
       runApp(const ProviderScope(child: AppWithProviders()));
     },
     (Object error, StackTrace stack) {
@@ -101,6 +100,7 @@ class _MyAppState extends State<MyApp> {
       home: const SplashScreen(),
       routes: {
         '/profile': (context) => const ProfilePage(),
+        '/user_settings': (context) => const UserSettingsPage(),
         '/home': (context) => const SpeakUpHomeScreen(),
         '/privacy': (context) => const PrivacyScreen(),
         '/terms': (context) => const TermsScreen(),

@@ -1,6 +1,10 @@
 // lib/services/persistence_service.dart
+import 'dart:convert';
+
 import 'package:shared_preferences/shared_preferences.dart';
 import '../providers/user_dto.dart';
+import 'package:pprincipal/features/4_profile/domain/entities/user_settings.dart';
+import 'package:pprincipal/features/5_notifications/domain/entities/app_notification.dart';
 
 class PersistenceService {
   // Chaves existentes mantidas para onboarding/terms
@@ -14,6 +18,12 @@ class PersistenceService {
   static const String _userDtoKey = 'userDto';
   static const String _marketingKey = 'acceptedMarketing';
   static const String _loggedInKey = 'isLoggedIn';
+
+  // Chaves para configurações do utilizador (valores atômicos)
+  static const String _userSettingsMetaKey = 'userSettings_metaDiaria_';
+  static const String _userSettingsIdiomaKey = 'userSettings_idioma_';
+  static const String _userSettingsVelKey = 'userSettings_velocidade_';
+  static const String _userSettingsHoraKey = 'userSettings_hora_';
 
   // Onboarding
   Future<void> setSeenOnboarding(bool value) async {
@@ -143,5 +153,125 @@ class PersistenceService {
   Future<void> removeUserDto() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove(_userDtoKey);
+  }
+
+  // ---------- Granular getters/setters para UserSettings ----------
+  Future<void> setMetaDiaria(String userId, int minutos) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setInt('$_userSettingsMetaKey$userId', minutos);
+  }
+
+  Future<int?> getMetaDiaria(String userId) async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getInt('$_userSettingsMetaKey$userId');
+  }
+
+  Future<void> setIdiomaAtivo(String userId, String idioma) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('$_userSettingsIdiomaKey$userId', idioma);
+  }
+
+  Future<String?> getIdiomaAtivo(String userId) async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString('$_userSettingsIdiomaKey$userId');
+  }
+
+  Future<void> setVelocidadeReproducao(String userId, double velocidade) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setDouble('$_userSettingsVelKey$userId', velocidade);
+  }
+
+  Future<double?> getVelocidadeReproducao(String userId) async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getDouble('$_userSettingsVelKey$userId');
+  }
+
+  Future<void> setHoraLembrete(String userId, String? hora) async {
+    final prefs = await SharedPreferences.getInstance();
+    final key = '$_userSettingsHoraKey$userId';
+    if (hora == null) {
+      await prefs.remove(key);
+    } else {
+      await prefs.setString(key, hora);
+    }
+  }
+
+  Future<String?> getHoraLembrete(String userId) async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString('$_userSettingsHoraKey$userId');
+  }
+
+  // ---------- AppNotification persistence ----------
+  /// Armazena todas as notificações do utilizador em uma lista JSON.
+  Future<void> setAppNotifications(
+    String userId,
+    List<AppNotification> list,
+  ) async {
+    final prefs = await SharedPreferences.getInstance();
+    final key = 'appNotifications_$userId';
+    final jsonList = list.map((n) => n.toJson()).toList();
+    await prefs.setString(key, jsonEncode(jsonList));
+  }
+
+  /// Recupera todas as notificações do utilizador.
+  Future<List<AppNotification>> getAppNotifications(String userId) async {
+    final prefs = await SharedPreferences.getInstance();
+    final key = 'appNotifications_$userId';
+    final jsonStr = prefs.getString(key);
+    if (jsonStr == null) return <AppNotification>[];
+    final decoded = jsonDecode(jsonStr) as List<dynamic>;
+    return decoded
+        .map((e) => AppNotification.fromJson(e as Map<String, dynamic>))
+        .toList();
+  }
+
+  /// Adiciona/atualiza uma notificação para o utilizador.
+  Future<void> addAppNotification(
+    String userId,
+    AppNotification notificacao,
+  ) async {
+    final current = await getAppNotifications(userId);
+    final index = current.indexWhere((n) => n.id == notificacao.id);
+    if (index >= 0) {
+      current[index] = notificacao;
+    } else {
+      current.add(notificacao);
+    }
+    await setAppNotifications(userId, current);
+  }
+
+  /// Remove uma notificação por id.
+  Future<void> removeAppNotification(
+    String userId,
+    String notificationId,
+  ) async {
+    final current = await getAppNotifications(userId);
+    current.removeWhere((n) => n.id == notificationId);
+    await setAppNotifications(userId, current);
+  }
+
+  // ---------- UserSettings persistence ----------
+  // Armazena as configurações do utilizador em uma chave específica.
+  Future<void> setUserSettings(UserSettings settings) async {
+    final prefs = await SharedPreferences.getInstance();
+    final key = 'userSettings_${settings.userId}';
+    await prefs.setString(key, jsonEncode(settings.toJson()));
+  }
+
+  // Recupera as configurações do utilizador; retorna `null` se não existir.
+  Future<UserSettings?> getUserSettings(String userId) async {
+    final prefs = await SharedPreferences.getInstance();
+    final key = 'userSettings_$userId';
+    final jsonStr = prefs.getString(key);
+    if (jsonStr == null) return null;
+    final map = jsonDecode(jsonStr) as Map<String, dynamic>;
+    return UserSettings.fromJson(map);
+  }
+
+  // Remove configurações do utilizador persistidas.
+  Future<void> removeUserSettings(String userId) async {
+    final prefs = await SharedPreferences.getInstance();
+    final key = 'userSettings_$userId';
+    await prefs.remove(key);
   }
 }
