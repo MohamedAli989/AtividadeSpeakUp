@@ -1,7 +1,8 @@
 // lib/services/feedback_service.dart
 import 'dart:math';
-import '../models/practice_attempt.dart';
-import '../models/feedback.dart' as fb_model;
+import 'package:pprincipal/features/3_content/domain/entities/practice_attempt.dart';
+import 'package:pprincipal/features/3_content/domain/entities/feedback.dart'
+    as fb_model;
 
 /// Serviço responsável por analisar a pronúncia do utilizador.
 ///

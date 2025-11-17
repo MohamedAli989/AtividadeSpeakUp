@@ -1,34 +1,14 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:pprincipal/core/services/persistence_service.dart';
-import 'package:pprincipal/providers/provide_mapper.dart';
-import 'package:pprincipal/models/user_progress.dart';
+import 'package:pprincipal/features/4_profile/data/mappers/provide_mapper.dart';
+import 'package:pprincipal/features/3_content/domain/entities/user_progress.dart';
+import 'package:pprincipal/features/4_profile/domain/entities/user_profile.dart';
 
-class User {
-  final String? name;
-  final String? email;
-  final String? description;
-  final bool loggedIn;
-
-  const User({this.name, this.email, this.description, this.loggedIn = false});
-
-  User copyWith({
-    String? name,
-    String? email,
-    String? description,
-    bool? loggedIn,
-  }) {
-    return User(
-      name: name ?? this.name,
-      email: email ?? this.email,
-      description: description ?? this.description,
-      loggedIn: loggedIn ?? this.loggedIn,
-    );
-  }
-}
+// UserProfile entity moved to domain/entities and imported above.
 
 class UserState {
-  final User? profile;
+  final UserProfile? profile;
   final UserProgress? progress;
 
   const UserState({this.profile, this.progress});
@@ -51,7 +31,7 @@ class UserNotifier extends StateNotifier<AsyncValue<UserState>> {
   Future<void> load() async {
     try {
       final dto = await _svc.getUserDto();
-      User? profile;
+      UserProfile? profile;
       if (dto != null) {
         profile = ProvideMapper.fromDto(dto);
       } else {
@@ -59,7 +39,7 @@ class UserNotifier extends StateNotifier<AsyncValue<UserState>> {
         final email = await _svc.getUserEmail();
         final description = await _svc.getUserDescription();
         final loggedIn = await _svc.getLoggedIn();
-        profile = User(
+        profile = UserProfile(
           name: name,
           email: email,
           description: description,
@@ -112,7 +92,9 @@ class UserNotifier extends StateNotifier<AsyncValue<UserState>> {
 
   Future<void> setUserName(String name) async {
     final current = state.maybeWhen(data: (s) => s, orElse: () => null);
-    final updated = (current?.profile ?? const User()).copyWith(name: name);
+    final updated = (current?.profile ?? const UserProfile()).copyWith(
+      name: name,
+    );
     await _svc.setUserDto(ProvideMapper.toDto(updated));
     state = AsyncValue.data(
       (current ?? const UserState()).copyWith(profile: updated),
@@ -121,7 +103,7 @@ class UserNotifier extends StateNotifier<AsyncValue<UserState>> {
 
   Future<void> setUserDescription(String? description) async {
     final current = state.maybeWhen(data: (s) => s, orElse: () => null);
-    final updated = (current?.profile ?? const User()).copyWith(
+    final updated = (current?.profile ?? const UserProfile()).copyWith(
       description: description,
     );
     await _svc.setUserDto(ProvideMapper.toDto(updated));
@@ -145,7 +127,7 @@ class UserNotifier extends StateNotifier<AsyncValue<UserState>> {
 
   Future<void> setLoggedIn(bool value) async {
     final current = state.maybeWhen(data: (s) => s, orElse: () => null);
-    final updated = (current?.profile ?? const User()).copyWith(
+    final updated = (current?.profile ?? const UserProfile()).copyWith(
       loggedIn: value,
     );
     await _svc.setUserDto(ProvideMapper.toDto(updated));
@@ -159,7 +141,7 @@ class UserNotifier extends StateNotifier<AsyncValue<UserState>> {
     await _svc.logout();
     await _svc.removeUserDto();
     final current = state.maybeWhen(data: (s) => s, orElse: () => null);
-    final updated = (current?.profile ?? const User()).copyWith(
+    final updated = (current?.profile ?? const UserProfile()).copyWith(
       loggedIn: false,
       name: null,
       email: null,

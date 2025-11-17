@@ -6,10 +6,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shimmer/shimmer.dart';
 
 import 'package:pprincipal/core/utils/colors.dart';
-import 'package:pprincipal/services/content_service.dart';
-import 'package:pprincipal/models/lesson.dart';
-import 'package:pprincipal/models/module.dart';
-import 'package:pprincipal/providers/user_provider.dart';
+import 'package:pprincipal/features/3_content/data/datasources/content_remote_datasource.dart';
+import 'package:pprincipal/features/3_content/domain/entities/lesson.dart';
+import 'package:pprincipal/features/3_content/domain/entities/module.dart';
+import 'package:pprincipal/features/4_profile/presentation/providers/user_provider.dart';
 import 'package:pprincipal/features/3_content/presentation/pages/lesson_screen.dart';
 import 'package:pprincipal/features/4_profile/presentation/pages/settings_screen.dart';
 import 'package:pprincipal/features/5_notifications/presentation/providers/notification_provider.dart';
@@ -64,7 +64,7 @@ class _SpeakUpHomeScreenState extends ConsumerState<SpeakUpHomeScreen> {
   }
 
   Future<Map<String, dynamic>> _fetchHomeData() async {
-    final svc = ContentService();
+    final svc = ContentRemoteDataSource();
     final languages = await svc.loadLanguages();
     final languageId = languages.isNotEmpty ? languages.first.id : '';
     final modules = await svc.loadModules(languageId);
@@ -246,9 +246,8 @@ class _SpeakUpHomeScreenState extends ConsumerState<SpeakUpHomeScreen> {
                           ),
                         ),
                         FutureBuilder<List<Lesson>>(
-                          future: ContentService().loadLessonsForModule(
-                            module.id,
-                          ),
+                          future: ContentRemoteDataSource()
+                              .loadLessonsForModule(module.id),
                           builder: (context, snap) {
                             if (snap.connectionState != ConnectionState.done) {
                               return _construirCarregamentoShimmer();

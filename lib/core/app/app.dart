@@ -3,15 +3,15 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:pprincipal/screens/splash_screen.dart';
-import 'package:pprincipal/screens/profile_page.dart';
+import 'package:pprincipal/features/0_splash/presentation/pages/splash_screen.dart';
+import 'package:pprincipal/features/4_profile/presentation/pages/profile_page.dart';
 import 'package:pprincipal/features/4_profile/presentation/pages/user_settings_page.dart';
-import 'package:pprincipal/screens/speakup_home_screen.dart';
-import 'package:pprincipal/screens/login_screen.dart';
-import 'package:pprincipal/screens/privacy_screen.dart';
-import 'package:pprincipal/screens/terms_screen.dart';
-import 'package:pprincipal/screens/onboarding_screen.dart';
-import 'package:pprincipal/providers/accepted_terms_provider.dart';
+import 'package:pprincipal/features/3_content/presentation/pages/speakup_home_screen.dart';
+import 'package:pprincipal/features/2_auth/presentation/pages/login_screen.dart';
+import 'package:pprincipal/features/4_profile/presentation/pages/privacy_screen.dart';
+import 'package:pprincipal/features/2_auth/presentation/pages/terms_screen.dart';
+import 'package:pprincipal/features/1_onboarding/presentation/pages/onboarding_screen.dart';
+import 'package:pprincipal/features/2_auth/presentation/providers/accepted_terms_provider.dart';
 
 /// Conteúdo movido de `lib/main.dart`.
 /// Renomeado `MyApp` -> `App`.

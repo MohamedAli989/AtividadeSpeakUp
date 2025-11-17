@@ -1,10 +1,11 @@
 // lib/services/practice_service.dart
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../models/practice_attempt.dart';
-import '../models/feedback.dart' as fb_model;
-import 'feedback_service.dart';
-import '../providers/user_provider.dart';
+import 'package:pprincipal/features/3_content/domain/entities/practice_attempt.dart';
+import 'package:pprincipal/features/3_content/domain/entities/feedback.dart'
+    as fb_model;
+import 'package:pprincipal/services/feedback_service.dart';
+import 'package:pprincipal/features/4_profile/presentation/providers/user_provider.dart';
 
 /// Serviço que salva a tentativa de prática, chama a análise de IA e persiste
 /// o feedback, além de atualizar o progresso do utilizador.

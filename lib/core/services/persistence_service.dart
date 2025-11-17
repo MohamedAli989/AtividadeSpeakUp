@@ -2,7 +2,7 @@
 import 'dart:convert';
 
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:pprincipal/providers/user_dto.dart';
+import 'package:pprincipal/features/4_profile/data/dtos/user_dto.dart';
 import 'package:pprincipal/features/4_profile/domain/entities/user_settings.dart';
 import 'package:pprincipal/features/5_notifications/domain/entities/app_notification.dart';
 

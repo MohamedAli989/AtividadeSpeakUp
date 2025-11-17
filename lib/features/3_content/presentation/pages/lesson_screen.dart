@@ -5,11 +5,11 @@ import 'package:record/record.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:shimmer/shimmer.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:pprincipal/services/content_service.dart';
+import 'package:pprincipal/features/3_content/data/datasources/content_remote_datasource.dart';
 import 'package:pprincipal/services/practice_service.dart';
-import 'package:pprincipal/models/practice_attempt.dart';
-import 'package:pprincipal/providers/user_provider.dart';
-import 'package:pprincipal/models/phrase.dart';
+import 'package:pprincipal/features/3_content/domain/entities/practice_attempt.dart';
+import 'package:pprincipal/features/4_profile/presentation/providers/user_provider.dart';
+import 'package:pprincipal/features/3_content/domain/entities/phrase.dart';
 import 'package:pprincipal/core/utils/colors.dart';
 
 class LessonScreen extends ConsumerStatefulWidget {
@@ -39,7 +39,7 @@ class _LessonScreenState extends ConsumerState<LessonScreen> {
     setState(() {
       _loading = true;
     });
-    final svc = ContentService();
+    final svc = ContentRemoteDataSource();
     final phrases = await svc.loadPhrasesForLesson(widget.lessonId);
     if (!mounted) return;
     setState(() {
