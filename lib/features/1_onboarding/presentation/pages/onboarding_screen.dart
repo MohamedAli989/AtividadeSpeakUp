@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:dots_indicator/dots_indicator.dart';
 import 'package:pprincipal/features/2_auth/presentation/pages/terms_screen.dart';
-import 'package:pprincipal/utils/colors.dart';
+import 'package:pprincipal/core/utils/colors.dart';
 
 class OnboardingScreen extends StatefulWidget {
   const OnboardingScreen({super.key});

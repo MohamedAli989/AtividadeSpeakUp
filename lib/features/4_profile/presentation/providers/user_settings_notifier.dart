@@ -5,7 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:pprincipal/features/4_profile/domain/entities/user_settings.dart';
 import 'package:pprincipal/features/4_profile/domain/repositories/i_profile_repository.dart';
 import 'package:pprincipal/features/4_profile/data/repositories/profile_repository_impl.dart';
-import 'package:pprincipal/services/persistence_service.dart';
+import 'package:pprincipal/core/services/persistence_service.dart';
 
 class UserSettingsNotifier extends StateNotifier<AsyncValue<UserSettings>> {
   final IProfileRepository _repository;

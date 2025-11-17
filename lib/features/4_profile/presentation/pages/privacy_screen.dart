@@ -1,6 +1,6 @@
 // lib/features/4_profile/presentation/pages/privacy_screen.dart
 import 'package:flutter/material.dart';
-import 'package:pprincipal/services/persistence_service.dart';
+import 'package:pprincipal/core/services/persistence_service.dart';
 
 class PrivacyScreen extends StatefulWidget {
   const PrivacyScreen({super.key});

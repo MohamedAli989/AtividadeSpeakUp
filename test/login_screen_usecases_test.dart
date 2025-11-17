@@ -6,7 +6,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:pprincipal/features/2_auth/presentation/pages/login_screen.dart';
 import 'package:pprincipal/features/3_content/presentation/pages/speakup_home_screen.dart';
 import 'package:pprincipal/providers/user_provider.dart';
-import 'package:pprincipal/services/persistence_service.dart';
+import 'package:pprincipal/core/services/persistence_service.dart';
 
 /// Test helpers: mocks simples (sem dependência externa) para os usecases.
 class MockPularLoginUseCase {

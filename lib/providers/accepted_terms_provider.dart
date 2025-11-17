@@ -1,5 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../services/persistence_service.dart';
+import 'package:pprincipal/core/services/persistence_service.dart';
 
 class AcceptedTermsNotifier extends StateNotifier<bool> {
   final PersistenceService _svc;

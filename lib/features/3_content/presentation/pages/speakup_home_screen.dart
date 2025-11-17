@@ -5,7 +5,7 @@ import 'package:permission_handler/permission_handler.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shimmer/shimmer.dart';
 
-import 'package:pprincipal/utils/colors.dart';
+import 'package:pprincipal/core/utils/colors.dart';
 import 'package:pprincipal/services/content_service.dart';
 import 'package:pprincipal/models/lesson.dart';
 import 'package:pprincipal/models/module.dart';

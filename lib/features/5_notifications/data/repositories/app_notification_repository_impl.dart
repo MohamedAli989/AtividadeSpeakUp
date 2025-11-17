@@ -1,7 +1,7 @@
 // lib/features/5_notifications/data/repositories/app_notification_repository_impl.dart
 // Implementação do repositório de notificações usando PersistenceService.
 
-import 'package:pprincipal/services/persistence_service.dart';
+import 'package:pprincipal/core/services/persistence_service.dart';
 import '../../domain/entities/app_notification.dart';
 import '../../domain/repositories/i_app_notification_repository.dart';
 

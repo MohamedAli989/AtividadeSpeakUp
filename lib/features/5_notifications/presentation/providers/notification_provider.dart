@@ -2,7 +2,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:pprincipal/features/5_notifications/domain/usecases/ouvir_contagem_nao_lidas_usecase.dart';
 import 'package:pprincipal/features/5_notifications/data/repositories/notification_repository_impl.dart';
-import 'package:pprincipal/services/persistence_service.dart';
+import 'package:pprincipal/core/services/persistence_service.dart';
 import 'package:pprincipal/features/5_notifications/data/datasources/notification_remote_datasource.dart';
 
 // Provider que expõe o repositório de notificações (INotificationRepository)

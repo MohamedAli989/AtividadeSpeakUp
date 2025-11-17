@@ -4,7 +4,7 @@
 import 'package:pprincipal/features/5_notifications/domain/entities/app_notification.dart';
 import 'package:pprincipal/features/5_notifications/domain/repositories/i_notification_repository.dart';
 import '../datasources/notification_remote_datasource.dart';
-import 'package:pprincipal/services/persistence_service.dart';
+import 'package:pprincipal/core/services/persistence_service.dart';
 
 class NotificationRepositoryImpl implements INotificationRepository {
   final NotificationRemoteDataSource _remote;

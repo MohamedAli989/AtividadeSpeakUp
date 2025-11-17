@@ -1,7 +1,7 @@
 // lib/features/2_auth/presentation/pages/login_screen.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:pprincipal/utils/colors.dart';
+import 'package:pprincipal/core/utils/colors.dart';
 import 'package:pprincipal/providers/user_provider.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {

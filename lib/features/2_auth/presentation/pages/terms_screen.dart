@@ -2,7 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:pprincipal/providers/accepted_terms_provider.dart';
-import 'package:pprincipal/utils/colors.dart';
+import 'package:pprincipal/core/utils/colors.dart';
 
 class TermsScreen extends StatefulWidget {
   const TermsScreen({super.key});

@@ -1,4 +1,4 @@
-import 'package:pprincipal/services/persistence_service.dart';
+import 'package:pprincipal/core/services/persistence_service.dart';
 import 'package:pprincipal/features/4_profile/domain/entities/user_profile.dart';
 import 'package:pprincipal/features/4_profile/domain/repositories/i_profile_repository.dart';
 import 'package:pprincipal/features/4_profile/domain/entities/user_settings.dart';

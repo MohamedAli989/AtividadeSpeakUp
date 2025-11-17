@@ -10,7 +10,7 @@ import 'package:pprincipal/services/practice_service.dart';
 import 'package:pprincipal/models/practice_attempt.dart';
 import 'package:pprincipal/providers/user_provider.dart';
 import 'package:pprincipal/models/phrase.dart';
-import 'package:pprincipal/utils/colors.dart';
+import 'package:pprincipal/core/utils/colors.dart';
 
 class LessonScreen extends ConsumerStatefulWidget {
   final String lessonId;

@@ -5,7 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:pprincipal/features/5_notifications/domain/entities/app_notification.dart';
 import 'package:pprincipal/features/5_notifications/domain/repositories/i_app_notification_repository.dart';
 import 'package:pprincipal/features/5_notifications/data/repositories/app_notification_repository_impl.dart';
-import 'package:pprincipal/services/persistence_service.dart';
+import 'package:pprincipal/core/services/persistence_service.dart';
 
 class NotificationNotifier
     extends StateNotifier<AsyncValue<List<AppNotification>>> {

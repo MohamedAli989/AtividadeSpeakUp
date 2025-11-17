@@ -1,7 +1,7 @@
 // lib/features/4_profile/presentation/pages/settings_screen.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:pprincipal/services/persistence_service.dart';
+import 'package:pprincipal/core/services/persistence_service.dart';
 import 'package:pprincipal/providers/user_provider.dart';
 import 'package:pprincipal/features/4_profile/presentation/pages/profile_page.dart';
 import 'package:pprincipal/features/4_profile/presentation/providers/user_settings_notifier.dart';

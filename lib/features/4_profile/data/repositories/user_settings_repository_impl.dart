@@ -1,7 +1,7 @@
 // lib/features/4_profile/data/repositories/user_settings_repository_impl.dart
 // Implementação do repositório de UserSettings usando PersistenceService.
 
-import 'package:pprincipal/services/persistence_service.dart';
+import 'package:pprincipal/core/services/persistence_service.dart';
 import '../../domain/entities/user_settings.dart';
 import '../../domain/repositories/i_user_settings_repository.dart';
 

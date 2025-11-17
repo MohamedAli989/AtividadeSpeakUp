@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/providers.dart';
-import '../../../../utils/colors.dart';
+import 'package:pprincipal/core/utils/colors.dart';
 
 class TermsScreenClean extends ConsumerStatefulWidget {
   const TermsScreenClean({super.key});
