@@ -13,7 +13,7 @@ class UserState {
 
   const UserState({this.profile, this.progress});
 
-  UserState copyWith({User? profile, UserProgress? progress}) {
+  UserState copyWith({UserProfile? profile, UserProgress? progress}) {
     return UserState(
       profile: profile ?? this.profile,
       progress: progress ?? this.progress,
@@ -79,7 +79,7 @@ class UserNotifier extends StateNotifier<AsyncValue<UserState>> {
     required String email,
   }) async {
     final current = state.maybeWhen(data: (s) => s, orElse: () => null);
-    final updatedProfile = (current?.profile ?? const User()).copyWith(
+    final updatedProfile = (current?.profile ?? const UserProfile()).copyWith(
       name: name,
       email: email,
     );
@@ -116,7 +116,7 @@ class UserNotifier extends StateNotifier<AsyncValue<UserState>> {
     await _svc.removeUserData();
     await _svc.removeUserDto();
     final current = state.maybeWhen(data: (s) => s, orElse: () => null);
-    final updated = (current?.profile ?? const User()).copyWith(
+    final updated = (current?.profile ?? const UserProfile()).copyWith(
       name: null,
       email: null,
     );
@@ -227,7 +227,7 @@ final userProvider = StateNotifierProvider<UserNotifier, AsyncValue<UserState>>(
   },
 );
 
-final currentUserProvider = Provider<User?>((ref) {
+final currentUserProvider = Provider<UserProfile?>((ref) {
   final av = ref.watch(userProvider);
   return av.maybeWhen(data: (s) => s.profile, orElse: () => null);
 });

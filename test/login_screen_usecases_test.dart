@@ -7,6 +7,7 @@ import 'package:pprincipal/features/2_auth/presentation/pages/login_screen.dart'
 import 'package:pprincipal/features/3_content/presentation/pages/speakup_home_screen.dart';
 import 'package:pprincipal/providers/user_provider.dart';
 import 'package:pprincipal/core/services/persistence_service.dart';
+import 'package:pprincipal/features/4_profile/domain/entities/user_profile.dart';
 
 /// Test helpers: mocks simples (sem dependência externa) para os usecases.
 class MockPularLoginUseCase {
@@ -30,7 +31,9 @@ class FakeUserNotifier extends UserNotifier {
 
   FakeUserNotifier(this.mockPular) : super(PersistenceService()) {
     // override inicial de estado para evitar dependência de load() real
-    state = const AsyncValue.data(UserState(profile: User(loggedIn: false)));
+    state = const AsyncValue.data(
+      UserState(profile: UserProfile(loggedIn: false)),
+    );
   }
 
   @override

@@ -13,14 +13,15 @@ class ProfileRepositoryImpl implements IProfileRepository {
     final nome = await _persistenceService.getUserName();
     final email = await _persistenceService.getUserEmail();
     if (nome == null || email == null) return null;
-    return UserProfile(nome: nome, email: email);
+    return UserProfile(name: nome, email: email);
   }
 
   @override
   Future<void> salvarPerfilUsuario(String userId, UserProfile profile) async {
+    if (profile.name == null || profile.email == null) return;
     await _persistenceService.setUserData(
-      name: profile.nome,
-      email: profile.email,
+      name: profile.name!,
+      email: profile.email!,
     );
   }
 
