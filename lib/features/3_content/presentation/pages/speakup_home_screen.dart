@@ -7,6 +7,7 @@ import 'package:shimmer/shimmer.dart';
 
 import 'package:pprincipal/core/utils/colors.dart';
 import 'package:pprincipal/features/3_content/data/datasources/content_remote_datasource.dart';
+import 'package:pprincipal/features/3_content/presentation/dialogs/provider_actions_dialog.dart';
 import 'package:pprincipal/features/3_content/domain/entities/lesson.dart';
 import 'package:pprincipal/features/3_content/domain/entities/module.dart';
 import 'package:pprincipal/features/4_profile/presentation/providers/user_provider.dart';
@@ -295,6 +296,38 @@ class _SpeakUpHomeScreenState extends ConsumerState<SpeakUpHomeScreen> {
               builder: (_) =>
                   LessonScreen(lessonId: lesson.id, title: lesson.title),
             ),
+          );
+        },
+        onLongPress: () async {
+          await showProviderActionsDialog(
+            context,
+            title: lesson.title,
+            // Delega a edição para um formulário (exemplo de delegação):
+            showProviderFormDialog: (ctx) async {
+              // Aqui apenas mostramos um placeholder; em produção passe a
+              // função real que abre o formulário de edição.
+              await showDialog<void>(
+                context: ctx,
+                builder: (dctx) => AlertDialog(
+                  title: const Text('Editar lição'),
+                  content: const Text(
+                    'Abrir formulário de edição para a lição.',
+                  ),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.of(dctx).pop(),
+                      child: const Text('Fechar'),
+                    ),
+                  ],
+                ),
+              );
+            },
+            onRemove: () async {
+              // Placeholder de remoção: aqui você deve chamar o DAO/UseCase.
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Remoção solicitada')),
+              );
+            },
           );
         },
       ),
