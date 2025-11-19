@@ -12,6 +12,7 @@ import 'package:pprincipal/features/3_content/domain/entities/lesson.dart';
 import 'package:pprincipal/features/3_content/domain/entities/module.dart';
 import 'package:pprincipal/features/4_profile/presentation/providers/user_provider.dart';
 import 'package:pprincipal/features/3_content/presentation/pages/lesson_screen.dart';
+import 'package:pprincipal/features/3_content/presentation/pages/vocabulary_page.dart';
 import 'package:pprincipal/features/4_profile/presentation/pages/settings_screen.dart';
 import 'package:pprincipal/features/5_notifications/presentation/providers/notification_provider.dart';
 import 'package:pprincipal/features/5_notifications/presentation/pages/notifications_list_page.dart';
@@ -61,6 +62,7 @@ class _SpeakUpHomeScreenState extends ConsumerState<SpeakUpHomeScreen> {
     _widgetOptions = <Widget>[
       _buildActivitiesTabContent(),
       const SettingsScreen(),
+      const VocabularyPage(),
     ];
   }
 
@@ -164,6 +166,7 @@ class _SpeakUpHomeScreenState extends ConsumerState<SpeakUpHomeScreen> {
             icon: Icon(Icons.settings_outlined),
             label: 'Configurações',
           ),
+          BottomNavigationBarItem(icon: Icon(Icons.book), label: 'Vocabulário'),
         ],
         currentIndex: _selectedIndex,
         onTap: _onItemTapped,
