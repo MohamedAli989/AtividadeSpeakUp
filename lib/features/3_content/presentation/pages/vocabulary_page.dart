@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:pprincipal/features/3_content/presentation/providers/vocabulary_providers.dart';
+import 'package:pprincipal/features/3_content/presentation/providers/vocabulary_usecase_providers.dart';
 import 'package:pprincipal/features/3_content/presentation/widgets/vocabulary_list_item.dart';
 
 class VocabularyPage extends ConsumerWidget {
@@ -22,9 +23,8 @@ class VocabularyPage extends ConsumerWidget {
                 return VocabularyListItem(
                   item: item,
                   onSave: (updated) async {
-                    await ref
-                        .read(vocabularyListProvider.notifier)
-                        .salvarItem(updated);
+                    final salvar = ref.read(salvarVocabularioUseCaseProvider);
+                    await salvar(updated);
                   },
                 );
               },
