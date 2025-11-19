@@ -38,13 +38,19 @@ void main() {
       await tester.pumpAndSettle();
 
       // Now we should be at home
-      expect(find.text('Primeiros passos'), findsOneWidget);
+      expect(find.text('Próximas Lições'), findsOneWidget);
 
-      // Open Settings tab and tap 'Sair'
-      await tester.tap(find.text('Configurações'));
+      // Open Settings tab by tapping the settings icon in bottom nav
+      await tester.tap(find.byIcon(Icons.settings_outlined));
       await tester.pumpAndSettle();
 
-      // Tap 'Sair' in settings
+      // Scroll the Settings ListView until 'Sair' is visible, then tap it
+      await tester.scrollUntilVisible(
+        find.text('Sair'),
+        200.0,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await tester.pumpAndSettle();
       await tester.tap(find.text('Sair'));
       await tester.pumpAndSettle();
 

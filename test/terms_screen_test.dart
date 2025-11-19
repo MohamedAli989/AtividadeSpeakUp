@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:pprincipal/screens/terms_screen.dart';
+import 'package:pprincipal/features/2_auth/presentation/pages/terms_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {

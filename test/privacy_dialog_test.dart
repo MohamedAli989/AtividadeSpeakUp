@@ -26,30 +26,41 @@ void main() {
     await tester.pumpAndSettle();
 
     // At home
-    expect(find.text('Primeiros passos'), findsOneWidget);
+    expect(find.text('Próximas Lições'), findsOneWidget);
 
-    // Open drawer
-    final Finder menu = find.byTooltip('Open navigation menu');
-    await tester.tap(menu);
+    // Open Settings tab by tapping the settings icon
+    await tester.tap(find.byIcon(Icons.settings_outlined));
     await tester.pumpAndSettle();
 
-    // Open privacy dialog
+    // Scroll the Settings ListView until 'Privacidade & Consentimentos' is visible and tap it
+    await tester.scrollUntilVisible(
+      find.text('Privacidade & Consentimentos'),
+      200.0,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.pumpAndSettle();
     await tester.tap(find.text('Privacidade & Consentimentos'));
     await tester.pumpAndSettle();
 
-    // Initially marketing checkbox should be checked
-    expect(find.text('Consentimento de Marketing'), findsOneWidget);
+    // Verify the marketing switch exists and is initially checked
+    expect(find.text('Comunicações de Marketing'), findsOneWidget);
 
-    // Uncheck marketing
-    await tester.tap(find.byType(CheckboxListTile).at(0));
+    // Toggle marketing consent (SwitchListTile)
+    await tester.tap(find.byType(SwitchListTile));
     await tester.pumpAndSettle();
 
-    // Check erase PII
-    await tester.tap(find.byType(CheckboxListTile).at(1));
+    // Tap the 'Apagar Meus Dados Pessoais' ListTile to confirm deletion
+    await tester.scrollUntilVisible(
+      find.text('Apagar Meus Dados Pessoais'),
+      200.0,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Apagar Meus Dados Pessoais'));
     await tester.pumpAndSettle();
 
-    // Confirm
-    await tester.tap(find.text('Confirmar'));
+    // In the confirmation dialog press 'Apagar'
+    await tester.tap(find.text('Apagar'));
     await tester.pumpAndSettle();
 
     // Verify changes in PersistenceService

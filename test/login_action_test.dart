@@ -37,7 +37,7 @@ void main() {
     await tester.pumpAndSettle();
 
     // Should be at home
-    expect(find.text('Primeiros passos'), findsOneWidget);
+    expect(find.text('Próximas Lições'), findsOneWidget);
 
     // Verify loggedIn in persistence
     final svc = PersistenceService();

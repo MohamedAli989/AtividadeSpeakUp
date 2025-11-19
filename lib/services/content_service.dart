@@ -2,11 +2,11 @@
 import 'dart:convert';
 import 'package:flutter/services.dart' show rootBundle;
 import 'package:cloud_firestore/cloud_firestore.dart';
-import '../models/lesson.dart';
-import '../models/language.dart';
-import '../models/phrase.dart';
-import '../models/module.dart';
-import '../models/daily_challenge.dart';
+import 'package:pprincipal/features/3_content/domain/entities/lesson.dart';
+import 'package:pprincipal/features/3_content/domain/entities/language.dart';
+import 'package:pprincipal/features/3_content/domain/entities/phrase.dart';
+import 'package:pprincipal/features/3_content/domain/entities/module.dart';
+import 'package:pprincipal/features/3_content/domain/entities/daily_challenge.dart';
 
 class ContentService {
   /// Load languages from Firestore 'languages' collection.
