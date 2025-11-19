@@ -7,6 +7,7 @@ import 'package:pprincipal/features/3_content/domain/entities/vocabulary_item.da
 import 'package:pprincipal/features/3_content/domain/usecases/salvar_vocabulario_usecase.dart';
 import 'package:pprincipal/features/3_content/data/datasources/vocabulary_local_datasource.dart';
 import 'package:pprincipal/features/3_content/data/repositories/vocabulary_repository_impl.dart';
+import 'package:pprincipal/features/3_content/presentation/providers/vocabulary_providers.dart';
 
 /// Provider that exposes a `Future<void> Function(VocabularyItem)` usecase
 /// backed by SharedPreferences via `VocabularyLocalDataSource`.
@@ -18,5 +19,7 @@ final salvarVocabularioUseCaseProvider =
 
       return (VocabularyItem item) async {
         await usecase.call(item);
+        // Invalidate the vocabulary list so the UI reloads from persistence.
+        ref.invalidate(vocabularyListProvider);
       };
     });

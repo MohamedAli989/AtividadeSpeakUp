@@ -2,7 +2,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:pprincipal/core/utils/colors.dart';
-import 'package:pprincipal/providers/user_provider.dart';
+import 'package:pprincipal/features/2_auth/presentation/providers/auth_providers.dart';
+import 'package:pprincipal/features/4_profile/presentation/providers/user_provider.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
@@ -46,11 +47,19 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   Future<void> _login() async {
     if (!_formKey.currentState!.validate()) return;
     setState(() => _estaCarregando = true);
-    await Future.delayed(const Duration(seconds: 2));
-    await ref.read(userProvider.notifier).setLoggedIn(true);
-    if (!mounted) return;
-    setState(() => _estaCarregando = false);
-    Navigator.of(context).pushReplacementNamed('/home');
+    try {
+      final login = ref.read(loginUseCaseProvider);
+      await login.call(
+        email: _emailController.text.trim(),
+        password: _passwordController.text,
+      );
+      if (!mounted) return;
+      Navigator.of(context).pushReplacementNamed('/home');
+    } catch (e) {
+      // In case of error, we simply stop the loader; in production show error
+    } finally {
+      if (mounted) setState(() => _estaCarregando = false);
+    }
   }
 
   Future<void> _skipLogin() async {
@@ -78,10 +87,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       },
     );
 
-    if (name != null && name.isNotEmpty) {
-      await ref.read(userProvider.notifier).setUserName(name);
-    }
-
+    final pular = ref.read(pularLoginUseCaseProvider);
+    await pular.call(name: name);
+    // Ensure the in-memory user provider is updated so UI/tests observe the
+    // logged-in transition (tests override `userProvider` to a fake).
     await ref.read(userProvider.notifier).setLoggedIn(true);
     if (!mounted) return;
     Navigator.of(context).pushReplacementNamed('/home');

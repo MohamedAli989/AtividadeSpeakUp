@@ -13,7 +13,7 @@ class VocabularyPage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final items = ref.watch(vocabularyListProvider);
+    final itemsAsync = ref.watch(vocabularyListProvider);
 
     return Scaffold(
       appBar: AppBar(title: const Text('Meus Vocabulários')),
@@ -21,22 +21,29 @@ class VocabularyPage extends ConsumerWidget {
         onPressed: () => _showAddOrImportDialog(context, ref),
         child: const Icon(Icons.add),
       ),
-      body: items.isEmpty
-          ? const Center(child: Text('Nenhum item de vocabulário.'))
-          : ListView.separated(
-              itemCount: items.length,
-              separatorBuilder: (_, __) => const Divider(height: 1),
-              itemBuilder: (context, index) {
-                final item = items[index];
-                return VocabularyListItem(
-                  item: item,
-                  onSave: (updated) async {
-                    final salvar = ref.read(salvarVocabularioUseCaseProvider);
-                    await salvar(updated);
-                  },
-                );
-              },
-            ),
+      body: itemsAsync.when(
+        loading: () => const Center(child: CircularProgressIndicator()),
+        error: (e, st) => Center(child: Text('Erro carregando vocabulário')),
+        data: (items) {
+          if (items.isEmpty) {
+            return const Center(child: Text('Nenhum item de vocabulário.'));
+          }
+          return ListView.separated(
+            itemCount: items.length,
+            separatorBuilder: (_, __) => const Divider(height: 1),
+            itemBuilder: (context, index) {
+              final item = items[index];
+              return VocabularyListItem(
+                item: item,
+                onSave: (updated) async {
+                  final salvar = ref.read(salvarVocabularioUseCaseProvider);
+                  await salvar(updated);
+                },
+              );
+            },
+          );
+        },
+      ),
     );
   }
 }
