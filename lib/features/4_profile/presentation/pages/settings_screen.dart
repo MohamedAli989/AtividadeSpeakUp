@@ -5,6 +5,8 @@ import 'package:pprincipal/core/services/persistence_service.dart';
 import 'package:pprincipal/providers/user_provider.dart';
 import 'package:pprincipal/features/4_profile/presentation/pages/profile_page.dart';
 import 'package:pprincipal/features/4_profile/presentation/providers/user_settings_notifier.dart';
+import 'package:pprincipal/core/providers/theme_provider.dart';
+import 'package:pprincipal/core/utils/colors.dart';
 
 class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({super.key});
@@ -54,6 +56,24 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   void dispose() {
     _descController.dispose();
     super.dispose();
+  }
+
+  Widget _paletteButton(Color c) {
+    final cur = ref.watch(themeProvider);
+    final selected = cur.toARGB32() == c.toARGB32();
+    return GestureDetector(
+      onTap: () async {
+        await ref.read(themeProvider.notifier).setPalette(c);
+        setState(() {});
+      },
+      child: CircleAvatar(
+        backgroundColor: c,
+        radius: selected ? 22 : 18,
+        child: selected
+            ? const Icon(Icons.check, color: Colors.white, size: 18)
+            : null,
+      ),
+    );
   }
 
   @override
@@ -182,6 +202,47 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   );
                 },
               ),
+              // App palette selector
+              Card(
+                child: Padding(
+                  padding: const EdgeInsets.all(12.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'Paleta do aplicativo',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Row(
+                        children: [
+                          _paletteButton(AppColors.primaryBlue),
+                          const SizedBox(width: 8),
+                          _paletteButton(AppColors.primaryViolet),
+                          const SizedBox(width: 8),
+                          _paletteButton(Colors.teal),
+                          const SizedBox(width: 8),
+                          _paletteButton(Colors.orange),
+                          const SizedBox(width: 12),
+                          TextButton(
+                            onPressed: () async {
+                              await ref
+                                  .read(themeProvider.notifier)
+                                  .clearPalette();
+                              setState(() {});
+                            },
+                            child: const Text('Restaurar padrão'),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+
               Card(
                 child: Padding(
                   padding: const EdgeInsets.all(12.0),
@@ -203,20 +264,31 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                       const SizedBox(height: 12),
                       SizedBox(
                         width: double.infinity,
-                        child: ElevatedButton(
-                          onPressed: () async {
-                            final result = await Navigator.of(context).push(
-                              MaterialPageRoute(
-                                builder: (_) => const ProfilePage(),
+                        child: Builder(
+                          builder: (btnCtx) {
+                            WidgetsBinding.instance.addPostFrameCallback((_) {
+                              // ensure the button is visible in the scrollable
+                              Scrollable.ensureVisible(
+                                btnCtx,
+                                duration: Duration.zero,
+                              );
+                            });
+                            return ElevatedButton(
+                              onPressed: () async {
+                                final result = await Navigator.of(context).push(
+                                  MaterialPageRoute(
+                                    builder: (_) => const ProfilePage(),
+                                  ),
+                                );
+                                if (result == true) {
+                                  await ref.read(userProvider.notifier).load();
+                                }
+                              },
+                              child: const Text(
+                                'Visualizar / Editar informações básicas',
                               ),
                             );
-                            if (result == true) {
-                              await ref.read(userProvider.notifier).load();
-                            }
                           },
-                          child: const Text(
-                            'Visualizar / Editar informações básicas',
-                          ),
                         ),
                       ),
                       const SizedBox(height: 12),

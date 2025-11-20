@@ -1,4 +1,3 @@
-// lib/features/3_content/presentation/pages/speakup_home_screen.dart
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:permission_handler/permission_handler.dart';
@@ -12,9 +11,9 @@ import 'package:pprincipal/features/3_content/domain/entities/lesson.dart';
 import 'package:pprincipal/features/3_content/domain/entities/module.dart';
 import 'package:pprincipal/features/4_profile/presentation/providers/user_provider.dart';
 import 'package:pprincipal/features/3_content/presentation/pages/lesson_screen.dart';
-import 'package:pprincipal/features/3_content/presentation/pages/vocabulary_page.dart';
+import 'package:pprincipal/features/4_profile/presentation/pages/profile_page.dart';
 import 'package:pprincipal/features/4_profile/presentation/pages/settings_screen.dart';
-import 'package:pprincipal/features/5_notifications/presentation/providers/notification_provider.dart';
+import 'package:pprincipal/features/3_content/presentation/pages/vocabulary_page.dart';
 import 'package:pprincipal/features/5_notifications/presentation/pages/notifications_list_page.dart';
 
 class SpeakUpHomeScreen extends ConsumerStatefulWidget {
@@ -29,13 +28,28 @@ class _SpeakUpHomeScreenState extends ConsumerState<SpeakUpHomeScreen> {
   int _selectedIndex = 0;
   late final List<Widget> _widgetOptions;
 
+  @override
+  void initState() {
+    super.initState();
+    Future.microtask(() => ref.read(userProvider.notifier).load());
+    _widgetOptions = <Widget>[
+      _buildActivitiesTabContent(),
+      const VocabularyPage(),
+      const SettingsScreen(),
+      const ProfilePage(),
+    ];
+    if (_selectedIndex >= _widgetOptions.length) {
+      _selectedIndex = 0;
+    }
+  }
+
   Future<void> _handleMicPermission() async {
     final status = await Permission.microphone.request();
     if (status.isGranted) {
-      if (!mounted) return;
-      setState(() {
-        _isRecording = true;
-      });
+      if (!mounted) {
+        return;
+      }
+      setState(() => _isRecording = true);
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Gravando...'),
@@ -43,28 +57,23 @@ class _SpeakUpHomeScreenState extends ConsumerState<SpeakUpHomeScreen> {
         ),
       );
       Future.delayed(const Duration(seconds: 3), () {
-        if (mounted) setState(() => _isRecording = false);
+        if (mounted) {
+          setState(() => _isRecording = false);
+        }
       });
     } else if (status.isPermanentlyDenied) {
       openAppSettings();
     } else {
-      if (!mounted) return;
+      if (!mounted) {
+        return;
+      }
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Permissão do microfone negada.')),
       );
     }
   }
 
-  @override
-  void initState() {
-    super.initState();
-    Future.microtask(() => ref.read(userProvider.notifier).load());
-    _widgetOptions = <Widget>[
-      _buildActivitiesTabContent(),
-      const SettingsScreen(),
-      const VocabularyPage(),
-    ];
-  }
+  void _onItemTapped(int index) => setState(() => _selectedIndex = index);
 
   Future<Map<String, dynamic>> _fetchHomeData() async {
     final svc = ContentRemoteDataSource();
@@ -74,205 +83,72 @@ class _SpeakUpHomeScreenState extends ConsumerState<SpeakUpHomeScreen> {
     return {'languageId': languageId, 'modules': modules};
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.background,
-      appBar: AppBar(
-        title: Text(
-          'SpeakUp',
-          style: GoogleFonts.lato(
-            color: AppColors.primarySlate,
-            fontWeight: FontWeight.bold,
+  Widget _construirCarregamentoShimmer() {
+    return SizedBox(
+      height: 140,
+      child: ListView.separated(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0),
+        itemCount: 3,
+        separatorBuilder: (_, __) => const SizedBox(width: 12),
+        itemBuilder: (_, __) => Shimmer.fromColors(
+          baseColor: Colors.grey.shade300,
+          highlightColor: Colors.grey.shade100,
+          child: Card(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Container(width: 220, padding: const EdgeInsets.all(12.0)),
           ),
         ),
-        backgroundColor: Colors.white,
-        elevation: 1,
-        centerTitle: true,
-        actions: [
-          Builder(
-            builder: (context) {
-              final user = ref.watch(currentUserProvider);
-              final userId = user?.email ?? '';
-              final contagemAsync = ref.watch(
-                notificacoesNaoLidasProvider(userId),
-              );
-              return IconButton(
-                onPressed: () {
-                  if (userId.isEmpty) return;
-                  Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (_) => NotificationsListPage(userId: userId),
-                    ),
-                  );
-                },
-                icon: Stack(
-                  clipBehavior: Clip.none,
-                  children: [
-                    const Icon(Icons.notifications_outlined),
-                    Positioned(
-                      right: -6,
-                      top: -6,
-                      child: contagemAsync.maybeWhen(
-                        data: (c) => c > 0
-                            ? Container(
-                                padding: const EdgeInsets.all(4),
-                                decoration: BoxDecoration(
-                                  color: Colors.red,
-                                  shape: BoxShape.circle,
-                                ),
-                                constraints: const BoxConstraints(
-                                  minWidth: 20,
-                                  minHeight: 20,
-                                ),
-                                child: Center(
-                                  child: Text(
-                                    c.toString(),
-                                    style: const TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 12,
-                                    ),
-                                  ),
-                                ),
-                              )
-                            : const SizedBox.shrink(),
-                        orElse: () => const SizedBox.shrink(),
-                        loading: () => Container(
-                          width: 12,
-                          height: 12,
-                          decoration: const BoxDecoration(
-                            color: Colors.grey,
-                            shape: BoxShape.circle,
-                          ),
-                        ),
-                        error: (_, __) => const SizedBox.shrink(),
-                      ),
-                    ),
-                  ],
+      ),
+    );
+  }
+
+  Widget _buildActivitiesHorizontalBar() {
+    final eng = ['Introdução', 'Saudações', 'Perguntas'];
+    final esp = ['Introducción', 'Saludos', 'Preguntas'];
+
+    return SizedBox(
+      height: 120,
+      child: ListView(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0),
+        children: [miniCard('Inglês', eng), miniCard('Espanhol', esp)],
+      ),
+    );
+  }
+
+  Widget miniCard(String title, List<String> items) {
+    return Container(
+      width: 220,
+      margin: const EdgeInsets.only(right: 12.0),
+      child: Card(
+        child: SingleChildScrollView(
+          physics: const ClampingScrollPhysics(),
+          child: Padding(
+            padding: const EdgeInsets.all(12.0),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: const TextStyle(fontWeight: FontWeight.bold),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
-              );
-            },
-          ),
-        ],
-      ),
-      body: Center(child: _widgetOptions.elementAt(_selectedIndex)),
-      bottomNavigationBar: BottomNavigationBar(
-        items: const [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.list_alt),
-            label: 'Atividades',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.settings_outlined),
-            label: 'Configurações',
-          ),
-          BottomNavigationBarItem(icon: Icon(Icons.book), label: 'Vocabulário'),
-        ],
-        currentIndex: _selectedIndex,
-        onTap: _onItemTapped,
-      ),
-    );
-  }
-
-  void _onItemTapped(int index) {
-    setState(() {
-      _selectedIndex = index;
-    });
-  }
-
-  Widget _construirCarregamentoShimmer() {
-    return Column(
-      children: List.generate(3, (index) {
-        return Padding(
-          padding: const EdgeInsets.symmetric(vertical: 8.0),
-          child: Shimmer.fromColors(
-            baseColor: Colors.grey.shade300,
-            highlightColor: Colors.grey.shade100,
-            child: Container(
-              height: 48,
-              decoration: BoxDecoration(
-                color: Colors.grey,
-                borderRadius: BorderRadius.circular(12),
-              ),
+                const SizedBox(height: 6),
+                ...items
+                    .take(3)
+                    .map(
+                      (e) =>
+                          Text(e, maxLines: 1, overflow: TextOverflow.ellipsis),
+                    ),
+              ],
             ),
           ),
-        );
-      }),
-    );
-  }
-
-  Widget _buildActivitiesTabContent() {
-    return Padding(
-      padding: const EdgeInsets.all(16.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _buildPracticeCard(),
-          const SizedBox(height: 20),
-          Text(
-            'Próximas Lições',
-            style: GoogleFonts.lato(
-              fontSize: 22,
-              fontWeight: FontWeight.bold,
-              color: AppColors.primarySlate,
-            ),
-          ),
-          const SizedBox(height: 20),
-          Expanded(
-            child: FutureBuilder<Map<String, dynamic>>(
-              future: _fetchHomeData(),
-              builder: (context, snapshot) {
-                if (snapshot.connectionState != ConnectionState.done) {
-                  return _construirCarregamentoShimmer();
-                }
-                if (snapshot.hasError) {
-                  return const Center(
-                    child: Text('Erro ao carregar atividades.'),
-                  );
-                }
-                final data = snapshot.data!;
-                final modules = data['modules'] as List<Module>? ?? [];
-                if (modules.isEmpty) {
-                  return const Center(child: Text('Nenhuma lição disponível.'));
-                }
-                return ListView.builder(
-                  itemCount: modules.length,
-                  itemBuilder: (context, index) {
-                    final module = modules[index];
-                    return Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 8.0),
-                          child: Text(
-                            module.title,
-                            style: Theme.of(context).textTheme.headlineSmall,
-                          ),
-                        ),
-                        FutureBuilder<List<Lesson>>(
-                          future: ContentRemoteDataSource()
-                              .loadLessonsForModule(module.id),
-                          builder: (context, snap) {
-                            if (snap.connectionState != ConnectionState.done) {
-                              return _construirCarregamentoShimmer();
-                            }
-                            final lessons = snap.data ?? [];
-                            if (lessons.isEmpty) return const SizedBox.shrink();
-                            return Column(
-                              children: lessons
-                                  .map((l) => _buildLessonCard(l))
-                                  .toList(),
-                            );
-                          },
-                        ),
-                      ],
-                    );
-                  },
-                );
-              },
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }
@@ -293,22 +169,17 @@ class _SpeakUpHomeScreenState extends ConsumerState<SpeakUpHomeScreen> {
         ),
         subtitle: Text(lesson.subtitle),
         trailing: const Icon(Icons.arrow_forward_ios, size: 16),
-        onTap: () {
-          Navigator.of(context).push(
-            MaterialPageRoute(
-              builder: (_) =>
-                  LessonScreen(lessonId: lesson.id, title: lesson.title),
-            ),
-          );
-        },
+        onTap: () => Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (_) =>
+                LessonScreen(lessonId: lesson.id, title: lesson.title),
+          ),
+        ),
         onLongPress: () async {
           await showProviderActionsDialog(
             context,
             title: lesson.title,
-            // Delega a edição para um formulário (exemplo de delegação):
             showProviderFormDialog: (ctx) async {
-              // Aqui apenas mostramos um placeholder; em produção passe a
-              // função real que abre o formulário de edição.
               await showDialog<void>(
                 context: ctx,
                 builder: (dctx) => AlertDialog(
@@ -326,7 +197,6 @@ class _SpeakUpHomeScreenState extends ConsumerState<SpeakUpHomeScreen> {
               );
             },
             onRemove: () async {
-              // Placeholder de remoção: aqui você deve chamar o DAO/UseCase.
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(content: Text('Remoção solicitada')),
               );
@@ -339,28 +209,31 @@ class _SpeakUpHomeScreenState extends ConsumerState<SpeakUpHomeScreen> {
 
   Widget _buildPracticeCard() {
     return Card(
+      elevation: 8,
       color: AppColors.primarySlate,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       child: Padding(
-        padding: const EdgeInsets.all(20.0),
+        padding: const EdgeInsets.fromLTRB(12.0, 12.0, 12.0, 20.0),
         child: Column(
+          mainAxisSize: MainAxisSize.min,
           children: [
             const Text(
-              'Frase guiada para prática:',
-              style: TextStyle(color: Colors.white70, fontSize: 16),
+              'Lição atual',
+              style: TextStyle(color: Colors.white70, fontSize: 14),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 6),
             Text(
               '"Hello, how are you today?"',
               textAlign: TextAlign.center,
               style: GoogleFonts.lato(
                 color: Colors.white,
-                fontSize: 24,
+                fontSize: 20,
                 fontWeight: FontWeight.w500,
               ),
             ),
-            const SizedBox(height: 24),
-            FloatingActionButton(
+            const SizedBox(height: 16),
+            FloatingActionButton.small(
+              heroTag: 'practice_mic',
               onPressed: _handleMicPermission,
               backgroundColor: _isRecording
                   ? Colors.green
@@ -368,11 +241,176 @@ class _SpeakUpHomeScreenState extends ConsumerState<SpeakUpHomeScreen> {
               child: Icon(
                 _isRecording ? Icons.check : Icons.mic,
                 color: AppColors.textLight,
-                size: 30,
+                size: 22,
               ),
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildActivitiesTabContent() {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final horizontalBar = _buildActivitiesHorizontalBar();
+        return Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: ListView(
+            shrinkWrap: true,
+            children: [
+              const SizedBox(height: 12),
+              Container(
+                width: double.infinity,
+                color: Colors.black,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16.0,
+                  vertical: 8.0,
+                ),
+                child: Text(
+                  'Resumo',
+                  style: GoogleFonts.lato(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w600,
+                    fontSize: 16,
+                  ),
+                ),
+              ),
+              Transform.translate(
+                offset: const Offset(0, -8),
+                child: _buildPracticeCard(),
+              ),
+              const SizedBox(height: 28),
+              Text(
+                'Próximas Lições',
+                style: GoogleFonts.lato(
+                  fontSize: 22,
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.primarySlate,
+                ),
+              ),
+              const SizedBox(height: 12),
+              horizontalBar,
+              const SizedBox(height: 12),
+              FutureBuilder<Map<String, dynamic>>(
+                future: _fetchHomeData(),
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState != ConnectionState.done) {
+                    return _construirCarregamentoShimmer();
+                  }
+                  if (snapshot.hasError) {
+                    return const Center(
+                      child: Text('Erro ao carregar atividades.'),
+                    );
+                  }
+                  final data = snapshot.data!;
+                  final modules = data['modules'] as List<Module>? ?? [];
+                  if (modules.isEmpty) {
+                    return const Center(
+                      child: Text('Nenhuma lição disponível.'),
+                    );
+                  }
+                  return ListView.builder(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    itemCount: modules.length,
+                    itemBuilder: (context, index) {
+                      final module = modules[index];
+                      return Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 8.0),
+                            child: Text(
+                              module.title,
+                              style: Theme.of(context).textTheme.headlineSmall,
+                            ),
+                          ),
+                          FutureBuilder<List<Lesson>>(
+                            future: ContentRemoteDataSource()
+                                .loadLessonsForModule(module.id),
+                            builder: (context, snap) {
+                              if (snap.connectionState !=
+                                  ConnectionState.done) {
+                                return _construirCarregamentoShimmer();
+                              }
+                              final lessons = snap.data ?? [];
+                              if (lessons.isEmpty) {
+                                return const SizedBox.shrink();
+                              }
+                              return Column(
+                                children: lessons
+                                    .map((l) => _buildLessonCard(l))
+                                    .toList(),
+                              );
+                            },
+                          ),
+                        ],
+                      );
+                    },
+                  );
+                },
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: AppColors.background,
+      appBar: AppBar(
+        title: Text(
+          'SpeakUp',
+          style: GoogleFonts.lato(
+            color: AppColors.primarySlate,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        backgroundColor: Colors.white,
+        elevation: 1,
+        centerTitle: true,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.notifications_outlined),
+            onPressed: () {
+              final user = ref.read(currentUserProvider);
+              final userId = user?.email ?? '';
+              if (userId.isEmpty) {
+                return;
+              }
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (_) => NotificationsListPage(userId: userId),
+                ),
+              );
+            },
+          ),
+        ],
+      ),
+      body: _widgetOptions.elementAt(_selectedIndex),
+      bottomNavigationBar: BottomNavigationBar(
+        type: BottomNavigationBarType.fixed,
+        items: const [
+          BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Atividades'),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.menu_book),
+            label: 'Vocabulário',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.settings_outlined),
+            label: 'Configurações',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.person_outline),
+            label: 'Perfil',
+          ),
+        ],
+        currentIndex: _selectedIndex,
+        onTap: _onItemTapped,
       ),
     );
   }
