@@ -1,5 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../services/persistence_service.dart';
+import 'package:pprincipal/core/services/persistence_service.dart';
 import '../data/datasources/local_terms_datasource.dart';
 import '../data/repositories/terms_repository_impl.dart';
 import '../domain/repositories/terms_repository.dart';

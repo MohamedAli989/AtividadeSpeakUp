@@ -1,25 +1,6 @@
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../services/persistence_service.dart';
+// Compatibility re-export for accepted terms provider.
+export 'package:pprincipal/features/2_auth/presentation/providers/accepted_terms_provider.dart';
 
-class AcceptedTermsNotifier extends StateNotifier<bool> {
-  final PersistenceService _svc;
-
-  AcceptedTermsNotifier(this._svc) : super(false) {
-    _load();
-  }
-
-  Future<void> _load() async {
-    final val = await _svc.getAcceptedTerms();
-    state = val;
-  }
-
-  Future<void> setAccepted(bool value) async {
-    await _svc.setAcceptedTerms(value);
-    state = value;
-  }
-}
-
-final acceptedTermsProvider =
-    StateNotifierProvider<AcceptedTermsNotifier, bool>((ref) {
-      return AcceptedTermsNotifier(PersistenceService());
-    });
+/*
+  Mantém compatibilidade com imports antigos de `package:pprincipal/providers/accepted_terms_provider.dart`.
+*/

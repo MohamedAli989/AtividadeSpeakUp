@@ -1,10 +1,8 @@
-// lib/utils/colors.dart
-import 'package:flutter/material.dart';
+// Temporary re-export for compatibility. Prefer using `package:pprincipal/core/utils/colors.dart`.
+export 'package:pprincipal/core/utils/colors.dart';
 
-class AppColors {
-  static const Color primaryBlue = Color(0xFF3B82F6);
-  static const Color primaryViolet = Color(0xFF7C3AED);
-  static const Color primarySlate = Color(0xFF1F2937);
-  static const Color background = Color(0xFFF9FAFB);
-  static const Color textLight = Colors.white;
-}
+/*
+  Este arquivo existe apenas para compatibilidade com importações antigas.
+  Quando todo o código usar `package:pprincipal/core/utils/colors.dart`, este arquivo
+  pode ser removido.
+*/

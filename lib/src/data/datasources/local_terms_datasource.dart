@@ -1,4 +1,4 @@
-import '../../../services/persistence_service.dart';
+import 'package:pprincipal/core/services/persistence_service.dart';
 
 class LocalTermsDataSource {
   final PersistenceService _persistenceService;
