@@ -28,6 +28,7 @@ class _LessonScreenState extends ConsumerState<LessonScreen> {
   String? _recordingPhraseId;
   List<Phrase> _phrases = [];
   bool _loading = true;
+  int _selectedPhraseIndex = 0;
 
   @override
   void initState() {
@@ -181,33 +182,99 @@ class _LessonScreenState extends ConsumerState<LessonScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final selectedPhrase = _phrases.isNotEmpty
+        ? _phrases[_selectedPhraseIndex]
+        : null;
     return Scaffold(
       appBar: AppBar(title: Text(widget.title)),
       body: _loading
           ? _construirCarregamentoShimmer()
-          : ListView.builder(
-              itemCount: _phrases.length,
-              itemBuilder: (context, index) {
-                final p = _phrases[index];
-                final recordingThis =
-                    _isRecording && _recordingPhraseId == p.id;
-                return ListTile(
-                  title: Text(p.text),
-                  subtitle: _audioPath != null && _recordingPhraseId == p.id
-                      ? Text('Última gravação: ${_audioPath!.split('/').last}')
-                      : null,
-                  trailing: IconButton(
-                    icon: Icon(
-                      recordingThis ? Icons.stop : Icons.mic,
-                      color: recordingThis
-                          ? Colors.red
-                          : AppColors.primaryViolet,
+          : Column(
+              children: [
+                Expanded(
+                  flex: 2,
+                  child: Center(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                      child: Text(
+                        selectedPhrase?.text ?? '',
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(
+                          fontSize: 24,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
                     ),
-                    onPressed: () => _handleRecording(p),
                   ),
-                );
-              },
+                ),
+                const Divider(height: 1),
+                Expanded(
+                  flex: 3,
+                  child: ListView.builder(
+                    itemCount: _phrases.length,
+                    itemBuilder: (context, index) {
+                      final p = _phrases[index];
+                      final isSelected = index == _selectedPhraseIndex;
+                      return Card(
+                        margin: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 8,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: ListTile(
+                          title: Text(
+                            p.text,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          subtitle:
+                              isSelected &&
+                                  _audioPath != null &&
+                                  _recordingPhraseId == p.id
+                              ? Text(
+                                  'Última gravação: ${_audioPath!.split('/').last}',
+                                )
+                              : null,
+                          trailing: Icon(
+                            isSelected ? Icons.volume_up : Icons.mic_none,
+                            color: isSelected ? AppColors.primary : Colors.grey,
+                          ),
+                          onTap: () {
+                            setState(() {
+                              _selectedPhraseIndex = index;
+                            });
+                          },
+                        ),
+                      );
+                    },
+                  ),
+                ),
+                const SizedBox(height: 88),
+              ],
             ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
+      floatingActionButton: AnimatedContainer(
+        duration: const Duration(milliseconds: 250),
+        width: 96,
+        height: 96,
+        decoration: BoxDecoration(
+          color: _isRecording ? Colors.red : AppColors.primary,
+          shape: BoxShape.circle,
+          boxShadow: [
+            BoxShadow(color: Colors.black.withAlpha(38), blurRadius: 16),
+          ],
+        ),
+        child: IconButton(
+          iconSize: 40,
+          color: Colors.white,
+          icon: Icon(_isRecording ? Icons.stop : Icons.mic),
+          onPressed: selectedPhrase == null
+              ? null
+              : () => _handleRecording(selectedPhrase),
+        ),
+      ),
     );
   }
 }

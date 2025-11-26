@@ -38,4 +38,22 @@ class VocabularyListNotifier extends AsyncNotifier<List<VocabularyItem>> {
       state = AsyncValue.error(e, st);
     }
   }
+
+  Future<void> removerItem(String id) async {
+    // Remove an item by id and persist the updated list.
+    state = const AsyncValue.loading();
+    try {
+      final current = await _repo.loadAll('u1');
+      // Try to infer userId from existing state if possible
+      final userId = (state.asData?.value.isNotEmpty ?? false)
+          ? state.asData!.value.first.userId
+          : 'u1';
+      final filtered = current.where((e) => e.id != id).toList();
+      await _repo.saveAll(userId, filtered);
+      final updated = await _repo.loadAll(userId);
+      state = AsyncValue.data(updated);
+    } catch (e, st) {
+      state = AsyncValue.error(e, st);
+    }
+  }
 }

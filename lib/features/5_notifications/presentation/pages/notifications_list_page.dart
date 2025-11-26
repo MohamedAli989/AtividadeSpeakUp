@@ -39,22 +39,25 @@ class NotificationsListPage extends ConsumerWidget {
           }
           return ListView.builder(
             itemCount: list.length,
+            cacheExtent: 400,
             itemBuilder: (context, index) {
               final n = list[index];
-              return ListTile(
-                title: Text(n.titulo),
-                subtitle: Text(n.corpo),
-                trailing: n.lida ? const Icon(Icons.done) : null,
-                onTap: () {
-                  Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (_) => NotificationDetailPage(
-                        userId: userId,
-                        notificacao: n,
+              return RepaintBoundary(
+                child: ListTile(
+                  title: Text(n.titulo),
+                  subtitle: Text(n.corpo),
+                  trailing: n.lida ? const Icon(Icons.done) : null,
+                  onTap: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => NotificationDetailPage(
+                          userId: userId,
+                          notificacao: n,
+                        ),
                       ),
-                    ),
-                  );
-                },
+                    );
+                  },
+                ),
               );
             },
           );

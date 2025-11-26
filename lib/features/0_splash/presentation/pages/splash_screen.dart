@@ -18,7 +18,18 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
   void initState() {
     super.initState();
     // Load user state and listen for the app status provider to navigate.
-    Future.microtask(() => ref.read(userProvider.notifier).load());
+    Future.microtask(() async {
+      try {
+        await ref
+            .read(userProvider.notifier)
+            .load()
+            .timeout(const Duration(seconds: 6));
+      } catch (e) {
+        // ignore non-fatal errors during splash load
+        // ignore: avoid_print
+        print('User load warning: $e');
+      }
+    });
     // Trigger the verificarStatusAppUseCaseProvider and navigate when it completes.
     Future.microtask(() async {
       try {
