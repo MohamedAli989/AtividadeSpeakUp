@@ -16,8 +16,6 @@ class PersistenceService {
   static const String _userEmailKey = 'userEmail';
   static const String _userDescriptionKey = 'userDescription';
   static const String _userDtoKey = 'userDto';
-  static const String _userAvatarColorKey = 'userAvatarColor';
-  static const String _appPaletteKey = 'appPalette';
   static const String _marketingKey = 'acceptedMarketing';
   static const String _loggedInKey = 'isLoggedIn';
 
@@ -155,37 +153,6 @@ class PersistenceService {
   Future<void> removeUserDto() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove(_userDtoKey);
-  }
-
-  // Avatar color persistence (stored as ARGB int)
-  Future<void> setUserAvatarColor(int colorValue) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setInt(_userAvatarColorKey, colorValue);
-  }
-
-  Future<int?> getUserAvatarColor() async {
-    final prefs = await SharedPreferences.getInstance();
-    return prefs.getInt(_userAvatarColorKey);
-  }
-
-  Future<void> removeUserAvatarColor() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.remove(_userAvatarColorKey);
-  }
-
-  Future<void> setAppPalette(int colorValue) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setInt(_appPaletteKey, colorValue);
-  }
-
-  Future<int?> getAppPalette() async {
-    final prefs = await SharedPreferences.getInstance();
-    return prefs.getInt(_appPaletteKey);
-  }
-
-  Future<void> removeAppPalette() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.remove(_appPaletteKey);
   }
 
   // ---------- Granular getters/setters para UserSettings ----------

@@ -12,7 +12,6 @@ import 'package:pprincipal/features/4_profile/presentation/pages/privacy_screen.
 import 'package:pprincipal/features/2_auth/presentation/pages/terms_screen.dart';
 import 'package:pprincipal/features/1_onboarding/presentation/pages/onboarding_screen.dart';
 import 'package:pprincipal/features/2_auth/presentation/providers/accepted_terms_provider.dart';
-import 'package:pprincipal/core/providers/theme_provider.dart';
 
 /// Conteúdo movido de `lib/main.dart`.
 /// Renomeado `MyApp` -> `App`.
@@ -40,20 +39,18 @@ class _AppWithProvidersState extends ConsumerState<AppWithProviders> {
   }
 }
 
-class App extends ConsumerStatefulWidget {
+class App extends StatefulWidget {
   const App({super.key, this.navigatorKey});
 
   final GlobalKey<NavigatorState>? navigatorKey;
 
   @override
-  ConsumerState<App> createState() => _AppState();
+  State<App> createState() => _AppState();
 }
 
-class _AppState extends ConsumerState<App> {
+class _AppState extends State<App> {
   @override
   Widget build(BuildContext context) {
-    final seedColor = ref.watch(themeProvider);
-
     final app = MaterialApp(
       navigatorKey: widget.navigatorKey,
       title: 'SpeakUp App',
@@ -64,7 +61,7 @@ class _AppState extends ConsumerState<App> {
           backgroundColor: Colors.white,
           foregroundColor: Colors.black,
         ),
-        colorScheme: ColorScheme.fromSeed(seedColor: seedColor),
+        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
         useMaterial3: true,
       ),
       home: const SplashScreen(),
