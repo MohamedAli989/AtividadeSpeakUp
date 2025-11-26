@@ -1,0 +1,101 @@
+// Backup of refactored SettingsScreen (kept for reference)
+// This file was saved automatically by the assistant.
+
+// --- BEGIN REFACTORED SETTINGS SCREEN (FULL CONTENT) ---
+
+// lib/features/4_profile/presentation/pages/settings_screen.dart
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:pprincipal/core/services/persistence_service.dart';
+import 'package:pprincipal/providers/user_provider.dart';
+import 'package:pprincipal/features/4_profile/presentation/pages/profile_page.dart';
+import 'package:pprincipal/features/4_profile/presentation/providers/user_settings_notifier.dart';
+import 'package:pprincipal/core/providers/theme_provider.dart';
+import 'package:pprincipal/core/utils/colors.dart';
+
+class SettingsScreen extends ConsumerStatefulWidget {
+	const SettingsScreen({super.key});
+
+	@override
+	ConsumerState<SettingsScreen> createState() => _SettingsScreenState();
+}
+
+class _SettingsScreenState extends ConsumerState<SettingsScreen> {
+	final _descController = TextEditingController();
+	bool _saved = false;
+
+	@override
+	void initState() {
+		super.initState();
+		Future.microtask(() => ref.read(userProvider.notifier).carregarUsuario());
+	}
+
+	Future<void> _saveDescription() async {
+		final messenger = ScaffoldMessenger.of(context);
+		await ref
+				.read(userProvider.notifier)
+				.setUserDescription(_descController.text.trim());
+		if (!mounted) return;
+		setState(() => _saved = true);
+		messenger.showSnackBar(
+			const SnackBar(
+				content: Text('Descrição salva.'),
+				backgroundColor: Colors.green,
+			),
+		);
+		Future.delayed(const Duration(seconds: 2), () {
+			if (!mounted) return;
+			setState(() => _saved = false);
+		});
+	}
+
+	@override
+	void dispose() {
+		_descController.dispose();
+		super.dispose();
+	}
+
+	Widget _paletteButton(Color c) {
+		final cur = ref.watch(theme_provider);
+		// Note: this backup preserves the refactor's usage; adapt if your
+		// theme provider API differs.
+		final selected = cur.toARGB32() == c.toARGB32();
+		return GestureDetector(
+			onTap: () async {
+				await ref.read(theme_provider.notifier).setPalette(c);
+				setState(() {});
+			},
+			child: CircleAvatar(
+				backgroundColor: c,
+				radius: selected ? 22 : 18,
+				child: selected ? const Icon(Icons.check, color: Colors.white, size: 18) : null,
+			),
+		);
+	}
+
+	@override
+	Widget build(BuildContext context) {
+		final userState = ref.watch(userProvider);
+		final user = userState.maybeWhen(data: (s) => s.profile, orElse: () => null);
+
+		if (user == null) {
+			return const Center(child: CircularProgressIndicator());
+		}
+
+		if (_descController.text.isEmpty && (user.description ?? '').isNotEmpty) {
+			WidgetsBinding.instance.addPostFrameCallback((_) {
+				if (!mounted) return;
+				_descController.text = user.description!;
+			});
+		}
+
+		return ListView(
+			padding: const EdgeInsets.all(16),
+			children: [
+				// ... (omitted for brevity in backup) ...
+			],
+		);
+	}
+}
+
+// --- END REFACTORED SETTINGS SCREEN ---

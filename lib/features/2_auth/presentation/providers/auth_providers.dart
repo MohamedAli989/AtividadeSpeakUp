@@ -5,9 +5,14 @@ import 'package:pprincipal/features/2_auth/domain/usecases/login_usecase.dart';
 import 'package:pprincipal/features/2_auth/domain/usecases/pular_login_usecase.dart';
 import 'package:pprincipal/features/2_auth/domain/usecases/aceitar_termos_usecase.dart';
 import 'package:pprincipal/features/2_auth/domain/usecases/verificar_status_app_usecase.dart';
+import 'package:pprincipal/src/core/providers.dart'
+    show persistenceServiceProvider;
 
 final authRepositoryProvider = Provider<IAuthRepository>((ref) {
-  return AuthRepositoryImpl();
+  // Use the shared PersistenceService provider so the same instance
+  // is used across the app instead of creating multiple instances.
+  final persistence = ref.read(persistenceServiceProvider);
+  return AuthRepositoryImpl(persistence);
 });
 
 final loginUseCaseProvider = Provider<LoginUseCase>((ref) {
@@ -26,6 +31,7 @@ final aceitarTermosUseCaseProvider = Provider<AceitarTermosUseCase>((ref) {
 });
 
 final verificarStatusAppUseCaseProvider = FutureProvider<String>((ref) async {
-  final usecase = VerificarStatusAppUseCase();
+  final persistence = ref.read(persistenceServiceProvider);
+  final usecase = VerificarStatusAppUseCase(persistence);
   return await usecase.call();
 });

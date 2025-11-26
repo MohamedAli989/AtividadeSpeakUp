@@ -9,6 +9,7 @@ import 'package:pprincipal/features/3_content/data/datasources/content_remote_da
 import 'package:pprincipal/features/4_profile/presentation/providers/user_provider.dart';
 import 'package:pprincipal/features/3_content/domain/entities/vocabulary_item.dart';
 import 'package:pprincipal/features/3_content/presentation/providers/vocabulary_usecase_providers.dart';
+import 'package:pprincipal/features/3_content/presentation/providers/vocabulary_providers.dart';
 import 'package:pprincipal/features/3_content/domain/entities/language.dart';
 
 class VocabularyPage extends ConsumerStatefulWidget {
@@ -348,81 +349,147 @@ class _VocabularyPageState extends ConsumerState<VocabularyPage> {
                     (t) => t['en'] == pair['en'],
                   );
                   final expanded = _expanded[globalIndex];
-                  return GestureDetector(
-                    onTap: () async {
-                      final willExpand = !_expanded[globalIndex];
-                      if (willExpand &&
-                          _useApi &&
-                          !_apiTranslations.containsKey(pair['en']!)) {
-                        await _fetchTranslationFor(pair['en']!);
-                      }
-                      setState(() => _expanded[globalIndex] = willExpand);
-                    },
-                    child: AnimatedContainer(
-                      duration: const Duration(milliseconds: 250),
-                      curve: Curves.easeInOut,
-                      padding: const EdgeInsets.all(12),
-                      height: expanded ? 110 : 68,
+                  return Dismissible(
+                    key: ValueKey(pair['id'] ?? '${pair['en']}_$index'),
+                    direction: DismissDirection.endToStart,
+                    background: Container(
                       decoration: BoxDecoration(
-                        color: Colors.white,
+                        color: Colors.red,
                         borderRadius: BorderRadius.circular(12),
-                        boxShadow: [
-                          BoxShadow(
-                            color: const Color.fromRGBO(0, 0, 0, 0.04),
-                            blurRadius: 6,
-                            offset: const Offset(0, 3),
-                          ),
-                        ],
                       ),
-                      child: Row(
-                        crossAxisAlignment: expanded
-                            ? CrossAxisAlignment.start
-                            : CrossAxisAlignment.center,
-                        children: [
-                          CircleAvatar(
-                            radius: expanded ? 26 : 18,
-                            backgroundColor: Colors.blueAccent,
-                            child: Text(
-                              pair['en']!.substring(0, 1).toUpperCase(),
-                              style: const TextStyle(color: Colors.white),
+                      alignment: Alignment.centerRight,
+                      padding: const EdgeInsets.only(right: 20),
+                      child: const Icon(Icons.delete, color: Colors.white),
+                    ),
+                    confirmDismiss: (direction) async {
+                      final result = await showDialog<bool>(
+                        context: context,
+                        barrierDismissible: false,
+                        builder: (ctx) => AlertDialog(
+                          title: const Text('Remover esta palavra?'),
+                          actions: [
+                            TextButton(
+                              onPressed: () => Navigator.of(ctx).pop(false),
+                              child: const Text('Cancelar'),
                             ),
+                            TextButton(
+                              onPressed: () => Navigator.of(ctx).pop(true),
+                              child: const Text('Remover'),
+                            ),
+                          ],
+                        ),
+                      );
+                      return result == true;
+                    },
+                    onDismissed: (direction) {
+                      final removedId = pair['id'] ?? '${pair['en']}_$index';
+                      final user = ref.read(currentUserProvider);
+                      final userId = user?.email ?? 'u1';
+                      final removedItem = VocabularyItem(
+                        id: removedId,
+                        userId: userId,
+                        word: pair['en'] ?? '',
+                        translation: pair['pt'] ?? '',
+                        originalPhraseId: 'swipe',
+                      );
+
+                      // remove through notifier (which updates persistence)
+                      ref
+                          .read(vocabularyListProvider.notifier)
+                          .removerItem(removedId);
+
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: const Text('Palavra removida.'),
+                          action: SnackBarAction(
+                            label: 'Desfazer',
+                            onPressed: () async {
+                              final salvar = ref.read(
+                                salvarVocabularioUseCaseProvider,
+                              );
+                              await salvar(removedItem);
+                            },
                           ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  pair['en']!,
-                                  style: TextStyle(
-                                    fontSize: expanded ? 20 : 16,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                                const SizedBox(height: 6),
-                                Text(
-                                  _apiTranslations[pair['en']!] ?? pair['pt']!,
-                                  style: TextStyle(
-                                    fontSize: expanded ? 18 : 14,
-                                    color: Colors.grey.shade700,
-                                  ),
-                                ),
-                                if (expanded) ...[
-                                  const SizedBox(height: 8),
+                        ),
+                      );
+                    },
+                    child: GestureDetector(
+                      onTap: () async {
+                        final willExpand = !_expanded[globalIndex];
+                        if (willExpand &&
+                            _useApi &&
+                            !_apiTranslations.containsKey(pair['en']!)) {
+                          await _fetchTranslationFor(pair['en']!);
+                        }
+                        setState(() => _expanded[globalIndex] = willExpand);
+                      },
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 250),
+                        curve: Curves.easeInOut,
+                        padding: const EdgeInsets.all(12),
+                        height: expanded ? 110 : 68,
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(12),
+                          boxShadow: [
+                            BoxShadow(
+                              color: const Color.fromRGBO(0, 0, 0, 0.04),
+                              blurRadius: 6,
+                              offset: const Offset(0, 3),
+                            ),
+                          ],
+                        ),
+                        child: Row(
+                          crossAxisAlignment: expanded
+                              ? CrossAxisAlignment.start
+                              : CrossAxisAlignment.center,
+                          children: [
+                            CircleAvatar(
+                              radius: expanded ? 26 : 18,
+                              backgroundColor: Colors.blueAccent,
+                              child: Text(
+                                pair['en']!.substring(0, 1).toUpperCase(),
+                                style: const TextStyle(color: Colors.white),
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
                                   Text(
-                                    'Exemplo: "${pair['en']!} everyone" → "${pair['pt']!} a todos"',
+                                    pair['en']!,
                                     style: TextStyle(
-                                      fontSize: 13,
-                                      color: Colors.grey.shade600,
+                                      fontSize: expanded ? 20 : 16,
+                                      fontWeight: FontWeight.w600,
                                     ),
                                   ),
+                                  const SizedBox(height: 6),
+                                  Text(
+                                    _apiTranslations[pair['en']!] ??
+                                        pair['pt']!,
+                                    style: TextStyle(
+                                      fontSize: expanded ? 18 : 14,
+                                      color: Colors.grey.shade700,
+                                    ),
+                                  ),
+                                  if (expanded) ...[
+                                    const SizedBox(height: 8),
+                                    Text(
+                                      'Exemplo: "${pair['en']!} everyone" → "${pair['pt']!} a todos"',
+                                      style: TextStyle(
+                                        fontSize: 13,
+                                        color: Colors.grey.shade600,
+                                      ),
+                                    ),
+                                  ],
                                 ],
-                              ],
+                              ),
                             ),
-                          ),
-                          const SizedBox(width: 8),
-                        ],
+                            const SizedBox(width: 8),
+                          ],
+                        ),
                       ),
                     ),
                   );

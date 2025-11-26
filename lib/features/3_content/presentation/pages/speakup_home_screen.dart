@@ -363,13 +363,7 @@ class _SpeakUpHomeScreenState extends ConsumerState<SpeakUpHomeScreen> {
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
-        title: Text(
-          'SpeakUp',
-          style: GoogleFonts.lato(
-            color: AppColors.primarySlate,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
+        title: Text('SpeakUp', style: newMethod()),
         backgroundColor: Colors.white,
         elevation: 1,
         centerTitle: true,
@@ -412,6 +406,13 @@ class _SpeakUpHomeScreenState extends ConsumerState<SpeakUpHomeScreen> {
         currentIndex: _selectedIndex,
         onTap: _onItemTapped,
       ),
+    );
+  }
+
+  TextStyle newMethod() {
+    return GoogleFonts.lato(
+      color: AppColors.primarySlate,
+      fontWeight: FontWeight.bold,
     );
   }
 }

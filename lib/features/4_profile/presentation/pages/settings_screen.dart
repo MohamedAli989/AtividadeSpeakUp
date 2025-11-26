@@ -1,372 +1,160 @@
 // lib/features/4_profile/presentation/pages/settings_screen.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:pprincipal/core/services/persistence_service.dart';
-import 'package:pprincipal/providers/user_provider.dart';
-import 'package:pprincipal/features/4_profile/presentation/pages/profile_page.dart';
-import 'package:pprincipal/features/4_profile/presentation/providers/user_settings_notifier.dart';
-import 'package:pprincipal/core/providers/theme_provider.dart';
 import 'package:pprincipal/core/utils/colors.dart';
+import 'package:pprincipal/features/4_profile/presentation/providers/user_provider.dart';
 
-class SettingsScreen extends ConsumerStatefulWidget {
+class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
 
   @override
-  ConsumerState<SettingsScreen> createState() => _SettingsScreenState();
-}
+  Widget build(BuildContext context, WidgetRef ref) {
+    final userState = ref.watch(userProvider);
 
-class _SettingsScreenState extends ConsumerState<SettingsScreen> {
-  final _descController = TextEditingController();
-  bool _loading = true;
-  bool _saved = false;
+    return userState.when(
+      loading: () => const Center(child: CircularProgressIndicator()),
+      error: (e, st) => Center(child: Text('Erro: $e')),
+      data: (state) {
+        final user = state.profile;
+        if (user == null) {
+          return const Center(child: Text('Nenhum utilizador autenticado.'));
+        }
 
-  @override
-  void initState() {
-    super.initState();
-    _loadProfile();
-  }
+        final initials = (user.name ?? 'U').trim().isEmpty
+            ? 'U'
+            : (user.name ?? 'U')[0].toUpperCase();
 
-  Future<void> _loadProfile() async {
-    setState(() => _loading = true);
-    await ref.read(userProvider.notifier).load();
-    final desc = await PersistenceService().getUserDescription();
-    if (!mounted) return;
-    _descController.text = desc ?? '';
-    setState(() => _loading = false);
-  }
-
-  Future<void> _saveDescription() async {
-    final messenger = ScaffoldMessenger.of(context);
-    await PersistenceService().setUserDescription(_descController.text.trim());
-    if (!mounted) return;
-    setState(() => _saved = true);
-    messenger.showSnackBar(
-      const SnackBar(
-        content: Text('Descrição salva.'),
-        backgroundColor: Colors.green,
-      ),
-    );
-    Future.delayed(const Duration(seconds: 2), () {
-      if (!mounted) return;
-      setState(() => _saved = false);
-    });
-  }
-
-  @override
-  void dispose() {
-    _descController.dispose();
-    super.dispose();
-  }
-
-  Widget _paletteButton(Color c) {
-    final cur = ref.watch(themeProvider);
-    final selected = cur.toARGB32() == c.toARGB32();
-    return GestureDetector(
-      onTap: () async {
-        await ref.read(themeProvider.notifier).setPalette(c);
-        setState(() {});
-      },
-      child: CircleAvatar(
-        backgroundColor: c,
-        radius: selected ? 22 : 18,
-        child: selected
-            ? const Icon(Icons.check, color: Colors.white, size: 18)
-            : null,
-      ),
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final user = ref.watch(currentUserProvider);
-    return _loading
-        ? const Center(child: CircularProgressIndicator())
-        : ListView(
-            padding: const EdgeInsets.all(16),
-            children: [
-              Card(
-                color: Colors.grey.shade100,
-                child: Padding(
-                  padding: const EdgeInsets.all(12.0),
-                  child: Row(
-                    children: const [
-                      Icon(Icons.tab),
-                      SizedBox(width: 12),
-                      Expanded(
-                        child: Text(
-                          'Abas disponíveis: Atividades • Configurações',
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
+        return ListView(
+          padding: const EdgeInsets.all(16),
+          children: [
+            // Cabeçalho de Perfil
+            Card(
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
               ),
-              const SizedBox(height: 12),
-              // Configurações do utilizador: meta diária e idioma
-              Builder(
-                builder: (context) {
-                  final userLocal = ref.watch(currentUserProvider);
-                  final userId = userLocal?.email ?? '';
-                  final settingsAsync = ref.watch(
-                    userSettingsNotifierProvider(userId),
-                  );
-                  return settingsAsync.when(
-                    loading: () => const Padding(
-                      padding: EdgeInsets.symmetric(vertical: 12.0),
-                      child: Center(child: CircularProgressIndicator()),
-                    ),
-                    error: (e, st) => Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 12.0),
-                      child: Text('Erro ao carregar configurações: $e'),
-                    ),
-                    data: (configuracoes) {
-                      return Card(
-                        child: Padding(
-                          padding: const EdgeInsets.all(12.0),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const Text(
-                                'Preferências',
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                              const SizedBox(height: 8),
-                              Text(
-                                'Meta diária: ${configuracoes.metaDiariaMinutos} minutos',
-                              ),
-                              Slider(
-                                value: configuracoes.metaDiariaMinutos
-                                    .toDouble(),
-                                min: 0,
-                                max: 180,
-                                divisions: 36,
-                                label: '${configuracoes.metaDiariaMinutos} min',
-                                onChanged: (v) async {
-                                  final nova = configuracoes.copyWith(
-                                    metaDiariaMinutos: v.round(),
-                                  );
-                                  await ref
-                                      .read(
-                                        userSettingsNotifierProvider(
-                                          userId,
-                                        ).notifier,
-                                      )
-                                      .salvar(nova);
-                                },
-                              ),
-                              const SizedBox(height: 8),
-                              Row(
-                                children: [
-                                  const Text('Idioma ativo:'),
-                                  const SizedBox(width: 12),
-                                  DropdownButton<String>(
-                                    value: configuracoes.idiomaAtivoId,
-                                    items: const [
-                                      DropdownMenuItem(
-                                        value: 'en-US',
-                                        child: Text('English'),
-                                      ),
-                                      DropdownMenuItem(
-                                        value: 'pt-BR',
-                                        child: Text('Português'),
-                                      ),
-                                      DropdownMenuItem(
-                                        value: 'es-ES',
-                                        child: Text('Español'),
-                                      ),
-                                    ],
-                                    onChanged: (v) async {
-                                      if (v == null) return;
-                                      final nova = configuracoes.copyWith(
-                                        idiomaAtivoId: v,
-                                      );
-                                      await ref
-                                          .read(
-                                            userSettingsNotifierProvider(
-                                              userId,
-                                            ).notifier,
-                                          )
-                                          .salvar(nova);
-                                    },
-                                  ),
-                                ],
-                              ),
-                            ],
-                          ),
-                        ),
-                      );
-                    },
-                  );
-                },
-              ),
-              // App palette selector
-              Card(
-                child: Padding(
-                  padding: const EdgeInsets.all(12.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        'Paleta do aplicativo',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      Row(
-                        children: [
-                          _paletteButton(AppColors.primaryBlue),
-                          const SizedBox(width: 8),
-                          _paletteButton(AppColors.primaryViolet),
-                          const SizedBox(width: 8),
-                          _paletteButton(Colors.teal),
-                          const SizedBox(width: 8),
-                          _paletteButton(Colors.orange),
-                          const SizedBox(width: 12),
-                          TextButton(
-                            onPressed: () async {
-                              await ref
-                                  .read(themeProvider.notifier)
-                                  .clearPalette();
-                              setState(() {});
-                            },
-                            child: const Text('Restaurar padrão'),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-
-              Card(
-                child: Padding(
-                  padding: const EdgeInsets.all(12.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        user?.name ?? 'Usuário',
+              color: AppColors.primary,
+              child: Padding(
+                padding: const EdgeInsets.all(20.0),
+                child: Row(
+                  children: [
+                    CircleAvatar(
+                      radius: 36,
+                      backgroundColor: Colors.white24,
+                      child: Text(
+                        initials,
                         style: const TextStyle(
-                          fontSize: 18,
+                          color: Colors.white,
+                          fontSize: 28,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
-                      const SizedBox(height: 6),
-                      const Text(
-                        'Texto provisório abaixo do nome (descrição rápida).',
-                        style: TextStyle(color: Colors.grey),
-                      ),
-                      const SizedBox(height: 12),
-                      SizedBox(
-                        width: double.infinity,
-                        child: Builder(
-                          builder: (btnCtx) {
-                            WidgetsBinding.instance.addPostFrameCallback((_) {
-                              // ensure the button is visible in the scrollable
-                              Scrollable.ensureVisible(
-                                btnCtx,
-                                duration: Duration.zero,
-                              );
-                            });
-                            return ElevatedButton(
-                              onPressed: () async {
-                                final result = await Navigator.of(context).push(
-                                  MaterialPageRoute(
-                                    builder: (_) => const ProfilePage(),
-                                  ),
-                                );
-                                if (result == true) {
-                                  await ref.read(userProvider.notifier).load();
-                                }
-                              },
-                              child: const Text(
-                                'Visualizar / Editar informações básicas',
-                              ),
-                            );
-                          },
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-                      const Text(
-                        'Descrição pessoal (opcional):',
-                        style: TextStyle(fontWeight: FontWeight.w600),
-                      ),
-                      const SizedBox(height: 8),
-                      TextField(
-                        controller: _descController,
-                        maxLines: 3,
-                        decoration: const InputDecoration(
-                          border: OutlineInputBorder(),
-                          hintText: 'Escreva uma breve descrição sobre você',
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      Row(
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          ElevatedButton(
-                            onPressed: _saveDescription,
-                            child: const Text('Salvar descrição'),
-                          ),
-                          const SizedBox(width: 8),
-                          TextButton(
-                            onPressed: () {
-                              _descController.text = '';
-                            },
-                            child: const Text('Limpar'),
-                          ),
-                          const SizedBox(width: 12),
-                          if (_saved)
-                            Row(
-                              children: const [
-                                Icon(
-                                  Icons.check_circle,
-                                  color: Colors.green,
-                                  size: 18,
-                                ),
-                                SizedBox(width: 6),
-                                Text(
-                                  'Salvo',
-                                  style: TextStyle(color: Colors.green),
-                                ),
-                              ],
+                          Text(
+                            user.name ?? 'Usuário',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
                             ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            user.email ?? '',
+                            style: const TextStyle(
+                              color: Colors.white70,
+                              fontSize: 14,
+                            ),
+                          ),
                         ],
                       ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
               ),
-              const SizedBox(height: 12),
-              const Divider(),
-              ListTile(
-                leading: const Icon(Icons.privacy_tip),
-                title: const Text('Privacidade & Consentimentos'),
-                onTap: () => Navigator.of(context).pushNamed('/privacy'),
+            ),
+
+            const SizedBox(height: 16),
+
+            // Grupo de Ações (Geral)
+            Card(
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
               ),
-              const Divider(),
-              ListTile(
-                leading: const Icon(Icons.info_outline),
-                title: const Text('Sobre o aplicativo'),
-                subtitle: const Text('Versão de exemplo'),
+              child: Column(
+                children: [
+                  ListTile(
+                    leading: const Icon(Icons.person),
+                    title: const Text('Editar Perfil'),
+                    trailing: const Icon(Icons.chevron_right),
+                    onTap: () => Navigator.of(context).pushNamed('/profile'),
+                  ),
+                  const Divider(height: 1),
+                  ListTile(
+                    leading: const Icon(Icons.tune),
+                    title: const Text('Preferências de Estudo'),
+                    trailing: const Icon(Icons.chevron_right),
+                    onTap: () =>
+                        Navigator.of(context).pushNamed('/user_settings'),
+                  ),
+                ],
               ),
-              const SizedBox(height: 12),
-              ListTile(
-                leading: const Icon(Icons.logout),
-                title: const Text('Sair'),
+            ),
+
+            const SizedBox(height: 12),
+
+            // Grupo de Ações (Privacidade)
+            Card(
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Column(
+                children: [
+                  ListTile(
+                    leading: const Icon(Icons.lock),
+                    title: const Text('Privacidade e Dados'),
+                    trailing: const Icon(Icons.chevron_right),
+                    onTap: () => Navigator.of(context).pushNamed('/privacy'),
+                  ),
+                  const Divider(height: 1),
+                  ListTile(
+                    leading: const Icon(Icons.description),
+                    title: const Text('Termos de Uso'),
+                    trailing: const Icon(Icons.chevron_right),
+                    onTap: () => Navigator.of(context).pushNamed('/terms'),
+                  ),
+                ],
+              ),
+            ),
+
+            const SizedBox(height: 20),
+
+            // Botão de Sair
+            Card(
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: ListTile(
+                leading: const Icon(Icons.logout, color: Colors.red),
+                title: const Text('Sair', style: TextStyle(color: Colors.red)),
                 onTap: () async {
-                  final svc = PersistenceService();
-                  final navigator = Navigator.of(context);
-                  await svc.logout();
-                  if (!mounted) return;
-                  navigator.pushNamedAndRemoveUntil('/login', (r) => false);
+                  // Use the UserNotifier logout which clears persisted data.
+                  await ref.read(userProvider.notifier).logout();
+                  if (context.mounted) {
+                    Navigator.of(
+                      context,
+                    ).pushNamedAndRemoveUntil('/login', (r) => false);
+                  }
                 },
               ),
-            ],
-          );
+            ),
+          ],
+        );
+      },
+    );
   }
 }

@@ -65,6 +65,25 @@ class UserNotifier extends StateNotifier<AsyncValue<UserState>> {
     }
   }
 
+  /// Attempt to load the current Firebase authenticated user's profile.
+  /// If there's no signed-in user, this method will set an empty data state.
+  Future<void> carregarUsuario() async {
+    try {
+      // Use persisted user email to determine whether a user is available.
+      final userEmail = await _svc.getUserEmail();
+      if (userEmail == null || userEmail.isEmpty) {
+        state = const AsyncValue.data(UserState(profile: null, progress: null));
+        return;
+      }
+
+      state = const AsyncValue.loading();
+      // Reuse existing load flow which will populate profile and progress.
+      await load();
+    } catch (e, st) {
+      state = AsyncValue.error(e, st);
+    }
+  }
+
   Future<bool> getSeenOnboarding() => _svc.getSeenOnboarding();
   Future<bool> getAcceptedTerms() => _svc.getAcceptedTerms();
   Future<void> setAcceptedTerms(bool value) => _svc.setAcceptedTerms(value);
