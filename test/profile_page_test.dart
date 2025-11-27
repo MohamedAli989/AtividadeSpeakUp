@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:pprincipal/screens/profile_page.dart';
+import 'package:pprincipal/features/4_profile/presentation/pages/profile_page.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 void main() {
@@ -40,6 +40,8 @@ void main() {
     await tester.pumpAndSettle();
 
     // Try to save with empty fields -> shows validation (two fields)
+    await tester.ensureVisible(find.text('Salvar'));
+    await tester.pumpAndSettle();
     await tester.tap(find.text('Salvar'));
     await tester.pumpAndSettle();
     expect(find.text('Campo obrigatório'), findsNWidgets(2));

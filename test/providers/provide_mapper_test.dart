@@ -1,10 +1,10 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:pprincipal/providers/user_provider.dart';
+import 'package:pprincipal/features/4_profile/domain/entities/user_profile.dart';
 import 'package:pprincipal/providers/provide_mapper.dart';
 
 void main() {
   test('ProvideMapper maps User <-> UserDTO', () {
-    final user = User(
+    final user = UserProfile(
       name: 'Alice',
       email: 'alice@example.com',
       description: 'desc',

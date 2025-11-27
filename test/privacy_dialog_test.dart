@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:pprincipal/main.dart';
-import 'package:pprincipal/services/persistence_service.dart';
+import 'package:pprincipal/core/services/persistence_service.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -26,30 +26,33 @@ void main() {
     await tester.pumpAndSettle();
 
     // At home
-    expect(find.text('Primeiros passos'), findsOneWidget);
+    expect(find.text('Próximas Lições'), findsOneWidget);
 
-    // Open drawer
-    final Finder menu = find.byTooltip('Open navigation menu');
-    await tester.tap(menu);
+    // Open Settings tab by tapping the settings icon
+    await tester.tap(find.byIcon(Icons.settings));
     await tester.pumpAndSettle();
 
-    // Open privacy dialog
-    await tester.tap(find.text('Privacidade & Consentimentos'));
+    // Scroll the Settings ListView until 'Privacidade' is visible and tap it
+    await tester.ensureVisible(find.text('Privacidade'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Privacidade'));
     await tester.pumpAndSettle();
 
-    // Initially marketing checkbox should be checked
-    expect(find.text('Consentimento de Marketing'), findsOneWidget);
+    // Verify the marketing switch exists and is initially checked
+    expect(find.text('Comunicações de Marketing'), findsOneWidget);
 
-    // Uncheck marketing
-    await tester.tap(find.byType(CheckboxListTile).at(0));
+    // Toggle marketing consent (SwitchListTile)
+    await tester.tap(find.byType(SwitchListTile));
     await tester.pumpAndSettle();
 
-    // Check erase PII
-    await tester.tap(find.byType(CheckboxListTile).at(1));
+    // Tap the 'Apagar Meus Dados Pessoais' ListTile to confirm deletion
+    await tester.ensureVisible(find.text('Apagar Meus Dados Pessoais'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Apagar Meus Dados Pessoais'));
     await tester.pumpAndSettle();
 
-    // Confirm
-    await tester.tap(find.text('Confirmar'));
+    // In the confirmation dialog press 'Apagar'
+    await tester.tap(find.text('Apagar'));
     await tester.pumpAndSettle();
 
     // Verify changes in PersistenceService
