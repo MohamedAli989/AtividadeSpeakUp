@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
+// removed google_fonts usage to use system font
 import 'package:permission_handler/permission_handler.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shimmer/shimmer.dart';
@@ -11,9 +11,8 @@ import 'package:pprincipal/features/3_content/domain/entities/lesson.dart';
 import 'package:pprincipal/features/3_content/domain/entities/module.dart';
 import 'package:pprincipal/features/4_profile/presentation/providers/user_provider.dart';
 import 'package:pprincipal/features/3_content/presentation/pages/lesson_screen.dart';
-import 'package:pprincipal/features/4_profile/presentation/pages/profile_page.dart';
-import 'package:pprincipal/features/4_profile/presentation/pages/settings_screen.dart';
 import 'package:pprincipal/features/3_content/presentation/pages/vocabulary_page.dart';
+import 'package:pprincipal/features/4_profile/presentation/pages/settings_screen.dart';
 import 'package:pprincipal/features/5_notifications/presentation/pages/notifications_list_page.dart';
 
 class SpeakUpHomeScreen extends ConsumerStatefulWidget {
@@ -26,21 +25,19 @@ class SpeakUpHomeScreen extends ConsumerStatefulWidget {
 class _SpeakUpHomeScreenState extends ConsumerState<SpeakUpHomeScreen> {
   bool _isRecording = false;
   int _selectedIndex = 0;
-  late final List<Widget> _widgetOptions;
+  // Build options on demand in `build` to avoid using `context` in initState.
+  List<Widget> get _widgetOptions => <Widget>[
+    _buildActivitiesTabContent(),
+    const VocabularyPage(),
+    const SettingsScreen(),
+  ];
 
   @override
   void initState() {
     super.initState();
-    Future.microtask(() => ref.read(userProvider.notifier).load());
-    _widgetOptions = <Widget>[
-      _buildActivitiesTabContent(),
-      const VocabularyPage(),
-      const SettingsScreen(),
-      const ProfilePage(),
-    ];
-    if (_selectedIndex >= _widgetOptions.length) {
-      _selectedIndex = 0;
-    }
+    // Load user data directly in initState (safe to call read here).
+    ref.read(userProvider.notifier).load();
+    // Do not build widgets here; they are constructed in `build` via getter.
   }
 
   Future<void> _handleMicPermission() async {
@@ -225,7 +222,7 @@ class _SpeakUpHomeScreenState extends ConsumerState<SpeakUpHomeScreen> {
             Text(
               '"Hello, how are you today?"',
               textAlign: TextAlign.center,
-              style: GoogleFonts.lato(
+              style: const TextStyle(
                 color: Colors.white,
                 fontSize: 20,
                 fontWeight: FontWeight.w500,
@@ -269,7 +266,7 @@ class _SpeakUpHomeScreenState extends ConsumerState<SpeakUpHomeScreen> {
                 ),
                 child: Text(
                   'Resumo',
-                  style: GoogleFonts.lato(
+                  style: const TextStyle(
                     color: Colors.white,
                     fontWeight: FontWeight.w600,
                     fontSize: 16,
@@ -283,7 +280,7 @@ class _SpeakUpHomeScreenState extends ConsumerState<SpeakUpHomeScreen> {
               const SizedBox(height: 28),
               Text(
                 'Próximas Lições',
-                style: GoogleFonts.lato(
+                style: const TextStyle(
                   fontSize: 22,
                   fontWeight: FontWeight.bold,
                   color: AppColors.primarySlate,
@@ -362,45 +359,58 @@ class _SpeakUpHomeScreenState extends ConsumerState<SpeakUpHomeScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: AppBar(
-        title: Text('SpeakUp', style: newMethod()),
-        backgroundColor: Colors.white,
-        elevation: 1,
-        centerTitle: true,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.notifications_outlined),
-            onPressed: () {
-              final user = ref.read(currentUserProvider);
-              final userId = user?.email ?? '';
-              if (userId.isEmpty) {
-                return;
-              }
-              Navigator.of(context).push(
-                MaterialPageRoute(
-                  builder: (_) => NotificationsListPage(userId: userId),
+      appBar: _selectedIndex == 0
+          ? AppBar(
+              title: Text('SpeakUp', style: newMethod()),
+              backgroundColor: Colors.white,
+              elevation: 1,
+              centerTitle: true,
+              actions: [
+                IconButton(
+                  icon: const Icon(Icons.notifications_outlined),
+                  onPressed: () {
+                    final user = ref.read(currentUserProvider);
+                    final userId = user?.email ?? '';
+                    if (userId.isEmpty) {
+                      return;
+                    }
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => NotificationsListPage(userId: userId),
+                      ),
+                    );
+                  },
                 ),
-              );
-            },
-          ),
-        ],
+              ],
+            )
+          : AppBar(
+              leading: IconButton(
+                icon: const Icon(Icons.arrow_back),
+                onPressed: () => _onItemTapped(0),
+              ),
+              title: Text(
+                _selectedIndex == 1 ? 'Vocabulário' : 'Configurações',
+              ),
+              backgroundColor: AppColors.surface,
+              elevation: 0,
+            ),
+      body: _widgetOptions.elementAt(
+        _selectedIndex < _widgetOptions.length ? _selectedIndex : 0,
       ),
-      body: _widgetOptions.elementAt(_selectedIndex),
       bottomNavigationBar: BottomNavigationBar(
         type: BottomNavigationBarType.fixed,
         items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Atividades'),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.list_alt),
+            label: 'Atividades',
+          ),
           BottomNavigationBarItem(
             icon: Icon(Icons.menu_book),
             label: 'Vocabulário',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.settings_outlined),
+            icon: Icon(Icons.settings),
             label: 'Configurações',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.person_outline),
-            label: 'Perfil',
           ),
         ],
         currentIndex: _selectedIndex,
@@ -410,7 +420,7 @@ class _SpeakUpHomeScreenState extends ConsumerState<SpeakUpHomeScreen> {
   }
 
   TextStyle newMethod() {
-    return GoogleFonts.lato(
+    return const TextStyle(
       color: AppColors.primarySlate,
       fontWeight: FontWeight.bold,
     );

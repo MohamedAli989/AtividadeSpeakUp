@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'firebase_options.dart';
 import 'package:pprincipal/core/app/app.dart' show AppWithProviders;
 
 // Re-export App and AppWithProviders for backward compatibility with tests
@@ -11,7 +12,9 @@ Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   // Initialize Firebase before running the app.
   try {
-    await Firebase.initializeApp();
+    await Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform,
+    );
   } catch (e, st) {
     // If Firebase isn't configured (no firebase_options.dart or platform files),
     // fail gracefully and continue running the app so the rest of the UI is usable.

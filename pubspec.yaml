@@ -39,7 +39,6 @@ dependencies:
   record: ^4.4.0
   path_provider: ^2.0.15
   flutter_riverpod: ^2.3.6
-  google_fonts: ^6.3.2
   firebase_core: ^2.24.0
   cloud_firestore: ^4.11.0
   dots_indicator: ^2.1.0

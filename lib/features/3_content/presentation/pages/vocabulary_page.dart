@@ -63,9 +63,8 @@ class _VocabularyPageState extends ConsumerState<VocabularyPage> {
     // API disabled by default (hidden). Use the refresh action to force a fetch.
     _useApi = false;
     // load cached translations for current language (will validate TTL)
-    WidgetsBinding.instance.addPostFrameCallback((_) async {
-      await _loadCachedTranslations();
-    });
+    // Call directly — no need for a post-frame callback.
+    _loadCachedTranslations();
   }
 
   void _onScroll() {
@@ -717,11 +716,11 @@ class _ImportCsvSheetState extends State<_ImportCsvSheet> {
                       if (!mounted) return;
                       // ignore: use_build_context_synchronously
                       Navigator.of(context).pop();
-                      WidgetsBinding.instance.addPostFrameCallback((_) {
+                      if (mounted) {
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(content: Text('Importação concluída')),
                         );
-                      });
+                      }
                     },
               child: _loading
                   ? const SizedBox(
@@ -875,11 +874,11 @@ class _AddWordsSheetState extends State<_AddWordsSheet> {
                       if (!mounted) return;
                       // ignore: use_build_context_synchronously
                       Navigator.of(context).pop();
-                      WidgetsBinding.instance.addPostFrameCallback((_) {
+                      if (mounted) {
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(content: Text('Palavras adicionadas')),
                         );
-                      });
+                      }
                     },
               child: _saving
                   ? const SizedBox(

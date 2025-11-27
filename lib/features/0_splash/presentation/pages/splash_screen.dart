@@ -17,10 +17,13 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
   @override
   void initState() {
     super.initState();
-    // Load user state and listen for the app status provider to navigate.
-    Future.microtask(() => ref.read(userProvider.notifier).load());
+    // Load user state and trigger the app status check.
+    // It's safe to call provider reads in initState; navigation happens after
+    // async operations and checks for `mounted` before using `context`.
+    ref.read(userProvider.notifier).load();
+
     // Trigger the verificarStatusAppUseCaseProvider and navigate when it completes.
-    Future.microtask(() async {
+    () async {
       try {
         final route = await ref.read(verificarStatusAppUseCaseProvider.future);
         // Keep splash visible briefly
@@ -31,7 +34,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
         if (!mounted) return;
         Navigator.of(context).pushReplacementNamed('/login');
       }
-    });
+    }();
   }
 
   @override

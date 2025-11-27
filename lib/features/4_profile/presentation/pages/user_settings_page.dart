@@ -1,187 +1,168 @@
-// lib/features/4_profile/presentation/pages/user_settings_page.dart
-// Página para visualizar e editar as configurações do utilizador.
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:pprincipal/features/4_profile/presentation/providers/user_settings_notifier.dart';
-import 'package:pprincipal/features/4_profile/domain/entities/user_settings.dart';
 import 'package:pprincipal/features/4_profile/presentation/providers/user_provider.dart';
+import 'package:pprincipal/features/4_profile/domain/entities/user_settings.dart';
+import 'package:pprincipal/core/utils/colors.dart';
 
-class UserSettingsPage extends ConsumerStatefulWidget {
+class UserSettingsPage extends ConsumerWidget {
   const UserSettingsPage({super.key});
 
-  @override
-  ConsumerState<UserSettingsPage> createState() => _UserSettingsPageState();
-}
-
-class _UserSettingsPageState extends ConsumerState<UserSettingsPage> {
-  final _formKey = GlobalKey<FormState>();
-  final _idiomaCtl = TextEditingController();
-  final _metaCtl = TextEditingController();
-  final _velCtl = TextEditingController();
-  String? _horaLembrete;
+  static const List<int> _options = [5, 10, 15, 20, 30];
 
   @override
-  void dispose() {
-    _idiomaCtl.dispose();
-    _metaCtl.dispose();
-    _velCtl.dispose();
-    super.dispose();
-  }
-
-  Future<void> _pickHora(BuildContext context) async {
-    final time = await showTimePicker(
-      context: context,
-      initialTime: _horaLembrete == null
-          ? TimeOfDay.now()
-          : TimeOfDay(
-              hour: int.parse(_horaLembrete!.split(':')[0]),
-              minute: int.parse(_horaLembrete!.split(':')[1]),
-            ),
-    );
-    if (time != null) {
-      setState(() {
-        _horaLembrete = time.format(context);
-      });
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final user = ref.watch(currentUserProvider);
-    if (user == null || user.email == null) {
-      return const Scaffold(
-        body: Center(child: Text('Utilizador não encontrado')),
+    if (user == null) {
+      return Scaffold(
+        appBar: AppBar(title: const Text('Preferências de Estudo')),
+        body: const Center(child: Text('Nenhum utilizador autenticado.')),
       );
     }
-    final userId = user.email!;
 
-    final state = ref.watch(userSettingsNotifierProvider(userId));
+    final settingsAsync = ref.watch(
+      userSettingsNotifierProvider(user.email ?? user.name ?? ''),
+    );
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Configurações do Utilizador')),
-      body: state.when(
+      appBar: AppBar(title: const Text('Preferências de Estudo')),
+      body: settingsAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, st) => Center(child: Text('Erro: $e')),
-        data: (settings) {
-          // Inicializa campos se ainda não preenchidos
-          if (_idiomaCtl.text.isEmpty) {
-            _idiomaCtl.text = settings.idiomaAtivoId;
-          }
-          if (_metaCtl.text.isEmpty) {
-            _metaCtl.text = settings.metaDiariaMinutos.toString();
-          }
-          if (_velCtl.text.isEmpty) {
-            _velCtl.text = settings.velocidadeReproducao.toString();
-          }
-          _horaLembrete ??= settings.horaLembrete;
+        data: (settings) => _buildContent(context, ref, settings),
+      ),
+    );
+  }
 
-          return Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Form(
-              key: _formKey,
-              child: ListView(
+  Widget _buildContent(
+    BuildContext context,
+    WidgetRef ref,
+    UserSettings settings,
+  ) {
+    final notifier = ref.read(
+      userSettingsNotifierProvider(settings.userId).notifier,
+    );
+
+    Future<void> save(UserSettings s) async {
+      try {
+        await notifier.salvar(s);
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Preferências salvas'),
+              backgroundColor: Colors.green,
+            ),
+          );
+        }
+      } catch (_) {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Erro ao salvar preferências'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      }
+    }
+
+    return Padding(
+      padding: const EdgeInsets.all(16.0),
+      child: ListView(
+        children: [
+          Card(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+            color: AppColors.primary.withOpacity(0.9),
+            child: Padding(
+              padding: const EdgeInsets.all(20.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  TextFormField(
-                    controller: _metaCtl,
-                    keyboardType: TextInputType.number,
-                    decoration: const InputDecoration(
-                      labelText: 'Meta diária (minutos)',
+                  const Text(
+                    'Meta diária',
+                    style: TextStyle(color: Colors.white70),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    '${settings.metaDiariaMinutos} min',
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 36,
+                      fontWeight: FontWeight.bold,
                     ),
-                    validator: (v) {
-                      if (v == null || v.trim().isEmpty) {
-                        return 'Informe a meta diária';
-                      }
-                      final n = int.tryParse(v);
-                      if (n == null || n <= 0) {
-                        return 'Valor inválido';
-                      }
-                      return null;
-                    },
                   ),
                   const SizedBox(height: 12),
-                  TextFormField(
-                    controller: _idiomaCtl,
-                    decoration: const InputDecoration(
-                      labelText: 'Idioma ativo (ex: en-US)',
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 6,
                     ),
-                    validator: (v) {
-                      if (v == null || v.trim().isEmpty) {
-                        return 'Informe o idioma';
-                      }
-                      return null;
-                    },
-                  ),
-                  const SizedBox(height: 12),
-                  TextFormField(
-                    controller: _velCtl,
-                    keyboardType: const TextInputType.numberWithOptions(
-                      decimal: true,
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(8),
                     ),
-                    decoration: const InputDecoration(
-                      labelText: 'Velocidade de reprodução (ex: 1.0)',
+                    child: DropdownButton<int>(
+                      value: settings.metaDiariaMinutos,
+                      isExpanded: true,
+                      underline: const SizedBox.shrink(),
+                      items: _options
+                          .map(
+                            (o) => DropdownMenuItem<int>(
+                              value: o,
+                              child: Text('$o minutos'),
+                            ),
+                          )
+                          .toList(),
+                      onChanged: (v) {
+                        if (v == null) return;
+                        save(settings.copyWith(metaDiariaMinutos: v));
+                      },
                     ),
-                    validator: (v) {
-                      if (v == null || v.trim().isEmpty) {
-                        return 'Informe a velocidade';
-                      }
-                      final d = double.tryParse(v.replaceAll(',', '.'));
-                      if (d == null || d <= 0) {
-                        return 'Valor inválido';
-                      }
-                      return null;
-                    },
-                  ),
-                  const SizedBox(height: 12),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          'Hora do lembrete: ${_horaLembrete ?? 'Desativado'}',
-                        ),
-                      ),
-                      TextButton(
-                        onPressed: () => _pickHora(context),
-                        child: const Text('Escolher'),
-                      ),
-                      if (_horaLembrete != null)
-                        IconButton(
-                          onPressed: () => setState(() => _horaLembrete = null),
-                          icon: const Icon(Icons.clear),
-                        ),
-                    ],
-                  ),
-                  const SizedBox(height: 20),
-                  ElevatedButton(
-                    onPressed: () async {
-                      if (!_formKey.currentState!.validate()) {
-                        return;
-                      }
-                      final nova = UserSettings(
-                        userId: userId,
-                        metaDiariaMinutos: int.parse(_metaCtl.text),
-                        idiomaAtivoId: _idiomaCtl.text.trim(),
-                        velocidadeReproducao: double.parse(
-                          _velCtl.text.replaceAll(',', '.'),
-                        ),
-                        horaLembrete: _horaLembrete,
-                      );
-                      await ref
-                          .read(userSettingsNotifierProvider(userId).notifier)
-                          .salvar(nova);
-                      if (context.mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Configurações salvas')),
-                        );
-                      }
-                    },
-                    child: const Text('Salvar'),
                   ),
                 ],
               ),
             ),
-          );
-        },
+          ),
+
+          const SizedBox(height: 18),
+
+          Card(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Column(
+              children: [
+                SwitchListTile(
+                  value: settings.horaLembrete != null,
+                  title: const Text('Lembretes Diários'),
+                  subtitle: Text(settings.horaLembrete ?? 'Desativado'),
+                  onChanged: (v) async {
+                    final updated = settings.copyWith(
+                      horaLembrete: v ? '18:00' : null,
+                    );
+                    await save(updated);
+                  },
+                ),
+                const Divider(height: 1),
+                ListTile(
+                  leading: const Icon(Icons.timer),
+                  title: const Text('Velocidade de reprodução'),
+                  subtitle: Text('${settings.velocidadeReproducao}x'),
+                  onTap: () async {
+                    final choices = [1.0, 1.25, 1.5];
+                    final current = settings.velocidadeReproducao;
+                    final next =
+                        choices[(choices.indexOf(current) + 1) %
+                            choices.length];
+                    await save(settings.copyWith(velocidadeReproducao: next));
+                  },
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }

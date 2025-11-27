@@ -41,7 +41,7 @@ void main() {
       expect(find.text('Próximas Lições'), findsOneWidget);
 
       // Open Settings tab by tapping the settings icon in bottom nav
-      await tester.tap(find.byIcon(Icons.settings_outlined));
+      await tester.tap(find.byIcon(Icons.settings));
       await tester.pumpAndSettle();
 
       // Scroll the Settings ListView until 'Sair' is visible, then tap it

@@ -1,17 +1,16 @@
-import 'package:pprincipal/core/services/persistence_service.dart';
+import 'package:pprincipal/features/2_auth/domain/repositories/i_auth_repository.dart';
 
 /// Returns a route string to navigate to based on persisted app state.
 class VerificarStatusAppUseCase {
-  final PersistenceService _persistence;
+  final IAuthRepository _repo;
 
-  VerificarStatusAppUseCase([PersistenceService? persistence])
-    : _persistence = persistence ?? PersistenceService();
+  VerificarStatusAppUseCase(this._repo);
 
   /// Returns one of: '/onboarding', '/terms', '/login', '/home'
   Future<String> call() async {
-    final seenOnboarding = await _persistence.getSeenOnboarding();
-    final acceptedTerms = await _persistence.getAcceptedTerms();
-    final loggedIn = await _persistence.isLoggedIn();
+    final seenOnboarding = await _repo.getSeenOnboarding();
+    final acceptedTerms = await _repo.getAcceptedTerms();
+    final loggedIn = await _repo.isLoggedIn();
 
     if (!seenOnboarding) return '/onboarding';
     if (!acceptedTerms) return '/terms';

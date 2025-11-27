@@ -1,7 +1,6 @@
 // lib/core/app/app.dart
 // dart:async intentionally omitted (no top-level zones here)
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:pprincipal/core/utils/colors.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:pprincipal/features/0_splash/presentation/pages/splash_screen.dart';
@@ -53,7 +52,10 @@ class App extends ConsumerStatefulWidget {
 class _AppState extends ConsumerState<App> {
   @override
   Widget build(BuildContext context) {
-    final baseText = GoogleFonts.nunitoTextTheme(Theme.of(context).textTheme);
+    final baseText = Theme.of(context).textTheme.apply(
+      bodyColor: AppColors.textPrimary,
+      displayColor: AppColors.textPrimary,
+    );
 
     final app = MaterialApp(
       navigatorKey: widget.navigatorKey,
@@ -70,16 +72,12 @@ class _AppState extends ConsumerState<App> {
           onSurface: AppColors.textPrimary,
         ),
         scaffoldBackgroundColor: AppColors.surface,
-        textTheme: baseText.copyWith(
-          bodyMedium: baseText.bodyMedium?.copyWith(
-            color: AppColors.textPrimary,
-          ),
-        ),
+        textTheme: baseText,
         appBarTheme: AppBarTheme(
           backgroundColor: AppColors.surface,
           elevation: 0,
           centerTitle: true,
-          titleTextStyle: GoogleFonts.nunito(
+          titleTextStyle: const TextStyle(
             fontSize: 20,
             fontWeight: FontWeight.w700,
             color: AppColors.textPrimary,
@@ -94,7 +92,7 @@ class _AppState extends ConsumerState<App> {
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(16),
             ),
-            textStyle: GoogleFonts.nunito(
+            textStyle: const TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.w700,
             ),
@@ -123,11 +121,6 @@ class _AppState extends ConsumerState<App> {
       },
     );
 
-    try {
-      ProviderScope.containerOf(context);
-      return app;
-    } catch (_) {
-      return ProviderScope(child: app);
-    }
+    return app;
   }
 }

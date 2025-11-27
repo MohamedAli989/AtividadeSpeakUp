@@ -29,17 +29,13 @@ void main() {
     expect(find.text('Próximas Lições'), findsOneWidget);
 
     // Open Settings tab by tapping the settings icon
-    await tester.tap(find.byIcon(Icons.settings_outlined));
+    await tester.tap(find.byIcon(Icons.settings));
     await tester.pumpAndSettle();
 
-    // Scroll the Settings ListView until 'Privacidade & Consentimentos' is visible and tap it
-    await tester.scrollUntilVisible(
-      find.text('Privacidade & Consentimentos'),
-      200.0,
-      scrollable: find.byType(Scrollable).first,
-    );
+    // Scroll the Settings ListView until 'Privacidade' is visible and tap it
+    await tester.ensureVisible(find.text('Privacidade'));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Privacidade & Consentimentos'));
+    await tester.tap(find.text('Privacidade'));
     await tester.pumpAndSettle();
 
     // Verify the marketing switch exists and is initially checked
@@ -50,11 +46,7 @@ void main() {
     await tester.pumpAndSettle();
 
     // Tap the 'Apagar Meus Dados Pessoais' ListTile to confirm deletion
-    await tester.scrollUntilVisible(
-      find.text('Apagar Meus Dados Pessoais'),
-      200.0,
-      scrollable: find.byType(Scrollable).first,
-    );
+    await tester.ensureVisible(find.text('Apagar Meus Dados Pessoais'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Apagar Meus Dados Pessoais'));
     await tester.pumpAndSettle();

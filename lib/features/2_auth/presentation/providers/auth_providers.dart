@@ -31,7 +31,7 @@ final aceitarTermosUseCaseProvider = Provider<AceitarTermosUseCase>((ref) {
 });
 
 final verificarStatusAppUseCaseProvider = FutureProvider<String>((ref) async {
-  final persistence = ref.read(persistenceServiceProvider);
-  final usecase = VerificarStatusAppUseCase(persistence);
+  final repo = ref.watch(authRepositoryProvider);
+  final usecase = VerificarStatusAppUseCase(repo);
   return await usecase.call();
 });

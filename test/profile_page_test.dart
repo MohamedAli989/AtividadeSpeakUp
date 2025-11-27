@@ -40,6 +40,8 @@ void main() {
     await tester.pumpAndSettle();
 
     // Try to save with empty fields -> shows validation (two fields)
+    await tester.ensureVisible(find.text('Salvar'));
+    await tester.pumpAndSettle();
     await tester.tap(find.text('Salvar'));
     await tester.pumpAndSettle();
     expect(find.text('Campo obrigatório'), findsNWidgets(2));

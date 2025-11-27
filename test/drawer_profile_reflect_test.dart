@@ -22,11 +22,11 @@ void main() {
     await tester.pumpAndSettle();
 
     // Open Settings tab and tap Edit Profile
-    await tester.tap(find.text('Configurações'));
+    await tester.tap(find.byIcon(Icons.settings));
     await tester.pumpAndSettle();
 
-    // Tap the profile editor button inside Settings
-    await tester.tap(find.text('Visualizar / Editar informações básicas'));
+    // Tap the profile editor button inside Settings (current label)
+    await tester.tap(find.text('Dados Pessoais'));
     await tester.pumpAndSettle();
 
     // Fill and save
@@ -35,12 +35,14 @@ void main() {
       find.byType(TextFormField).at(1),
       'charlie@example.com',
     );
+    await tester.ensureVisible(find.text('Salvar'));
+    await tester.pumpAndSettle();
     await tester.tap(find.text('Salvar'));
     await tester.pumpAndSettle();
 
     // Return to Settings and verify persistence stored the name (robust against layout changes)
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Configurações'));
+    await tester.tap(find.byIcon(Icons.settings));
     await tester.pumpAndSettle();
     final svc = PersistenceService();
     final dto = await svc.getUserDto();
