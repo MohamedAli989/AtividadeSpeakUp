@@ -11,6 +11,7 @@ import 'package:pprincipal/features/3_content/domain/entities/practice_attempt.d
 import 'package:pprincipal/features/4_profile/presentation/providers/user_provider.dart';
 import 'package:pprincipal/features/3_content/domain/entities/phrase.dart';
 import 'package:pprincipal/core/utils/colors.dart';
+import 'package:pprincipal/core/presentation/widgets/celebration_overlay.dart';
 
 class LessonScreen extends ConsumerStatefulWidget {
   final String lessonId;
@@ -49,7 +50,6 @@ class _LessonScreenState extends ConsumerState<LessonScreen> {
   }
 
   Future<void> _handleRecording(Phrase phrase) async {
-    final messenger = ScaffoldMessenger.of(context);
     if (_isRecording && _recordingPhraseId == phrase.id) {
       try {
         final savedPath = await _audioRecorder.stop();
@@ -59,13 +59,15 @@ class _LessonScreenState extends ConsumerState<LessonScreen> {
           _recordingPhraseId = null;
           _audioPath = savedPath;
         });
-        messenger.showSnackBar(
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Gravação salva em ${_audioPath ?? 'desconhecido'}'),
           ),
         );
         try {
-          messenger.showSnackBar(
+          if (!mounted) return;
+          ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
               content: Text('Analisando sua pronúncia...'),
               duration: Duration(seconds: 2),
@@ -86,7 +88,8 @@ class _LessonScreenState extends ConsumerState<LessonScreen> {
             ref,
           );
           if (feedback != null) {
-            messenger.showSnackBar(
+            if (!mounted) return;
+            ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 content: Text(
                   'Prática salva! Sua nota foi: ${feedback.overallScore.round()}%',
@@ -94,21 +97,28 @@ class _LessonScreenState extends ConsumerState<LessonScreen> {
                 backgroundColor: Colors.green,
               ),
             );
+            // Celebrate high scores
+            if (feedback.overallScore >= 90) {
+              // Trigger confetti via the overlay helper
+              CelebrationOverlay.of(context)?.play();
+            }
           } else {
-            messenger.showSnackBar(
+            if (!mounted) return;
+            ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
                 content: Text('Prática salva, mas a análise falhou.'),
               ),
             );
           }
         } catch (e) {
-          messenger.showSnackBar(
+          if (!mounted) return;
+          ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Erro ao processar a análise.')),
           );
         }
       } catch (e) {
         if (!mounted) return;
-        messenger.showSnackBar(
+        ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Erro ao salvar gravação.')),
         );
       }
@@ -118,7 +128,7 @@ class _LessonScreenState extends ConsumerState<LessonScreen> {
     final status = await Permission.microphone.request();
     if (!status.isGranted) {
       if (!mounted) return;
-      messenger.showSnackBar(
+      ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Permissão de microfone necessária.')),
       );
       return;
@@ -126,7 +136,7 @@ class _LessonScreenState extends ConsumerState<LessonScreen> {
 
     if (!await _audioRecorder.hasPermission()) {
       if (!mounted) return;
-      messenger.showSnackBar(
+      ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Permissão do gravador negada.')),
       );
       return;
@@ -145,7 +155,7 @@ class _LessonScreenState extends ConsumerState<LessonScreen> {
       });
     } catch (e) {
       if (!mounted) return;
-      messenger.showSnackBar(
+      ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Erro ao iniciar gravação.')),
       );
     }
@@ -181,33 +191,37 @@ class _LessonScreenState extends ConsumerState<LessonScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: Text(widget.title)),
-      body: _loading
-          ? _construirCarregamentoShimmer()
-          : ListView.builder(
-              itemCount: _phrases.length,
-              itemBuilder: (context, index) {
-                final p = _phrases[index];
-                final recordingThis =
-                    _isRecording && _recordingPhraseId == p.id;
-                return ListTile(
-                  title: Text(p.text),
-                  subtitle: _audioPath != null && _recordingPhraseId == p.id
-                      ? Text('Última gravação: ${_audioPath!.split('/').last}')
-                      : null,
-                  trailing: IconButton(
-                    icon: Icon(
-                      recordingThis ? Icons.stop : Icons.mic,
-                      color: recordingThis
-                          ? Colors.red
-                          : AppColors.primaryViolet,
+    return CelebrationOverlay(
+      child: Scaffold(
+        appBar: AppBar(title: Text(widget.title)),
+        body: _loading
+            ? _construirCarregamentoShimmer()
+            : ListView.builder(
+                itemCount: _phrases.length,
+                itemBuilder: (context, index) {
+                  final p = _phrases[index];
+                  final recordingThis =
+                      _isRecording && _recordingPhraseId == p.id;
+                  return ListTile(
+                    title: Text(p.text),
+                    subtitle: _audioPath != null && _recordingPhraseId == p.id
+                        ? Text(
+                            'Última gravação: ${_audioPath!.split('/').last}',
+                          )
+                        : null,
+                    trailing: IconButton(
+                      icon: Icon(
+                        recordingThis ? Icons.stop : Icons.mic,
+                        color: recordingThis
+                            ? Colors.red
+                            : AppColors.primaryViolet,
+                      ),
+                      onPressed: () => _handleRecording(p),
                     ),
-                    onPressed: () => _handleRecording(p),
-                  ),
-                );
-              },
-            ),
+                  );
+                },
+              ),
+      ),
     );
   }
 }

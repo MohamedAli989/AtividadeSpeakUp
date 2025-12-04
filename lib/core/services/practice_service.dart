@@ -1,5 +1,5 @@
 // lib/core/services/practice_service.dart
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:pprincipal/features/3_content/domain/entities/practice_attempt.dart';
 import 'package:pprincipal/features/3_content/domain/entities/feedback.dart'
@@ -20,20 +20,22 @@ class PracticeService {
     WidgetRef ref,
   ) async {
     try {
-      // 1) Persiste a tentativa
-      await FirebaseFirestore.instance
-          .collection('practice_attempts')
-          .doc(tentativa.id)
-          .set(tentativa.toJson());
+      // 1) Persist the attempt into Supabase (or fallback)
+      try {
+        await Supabase.instance.client
+            .from('practice_attempts')
+            .insert(tentativa.toJson());
+      } catch (_) {}
 
       // 2) Solicita análise (mock por enquanto)
       final feedback = await FeedbackService().analisarPronuncia(tentativa);
 
-      // 3) Persiste o feedback
-      await FirebaseFirestore.instance
-          .collection('feedback')
-          .doc(feedback.id)
-          .set(feedback.toJson());
+      // 3) Persist the feedback
+      try {
+        await Supabase.instance.client
+            .from('feedback')
+            .insert(feedback.toJson());
+      } catch (_) {}
 
       // 4) Atualiza progresso do usuário (adiciona XP)
       final pontos = feedback.overallScore.round();

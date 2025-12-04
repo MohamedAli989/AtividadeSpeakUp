@@ -1,6 +1,5 @@
-// lib/models/user_progress.dart
+// lib/core/domain/user_progress.dart
 // Removed Firestore dependency; timestamps handled as primitives
-
 class UserProgress {
   final String userId;
   final int totalXp;

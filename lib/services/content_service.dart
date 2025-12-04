@@ -1,7 +1,7 @@
 // lib/services/content_service.dart
 import 'dart:convert';
 import 'package:flutter/services.dart' show rootBundle;
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:pprincipal/features/3_content/domain/entities/lesson.dart';
 import 'package:pprincipal/features/3_content/domain/entities/language.dart';
 import 'package:pprincipal/features/3_content/domain/entities/phrase.dart';
@@ -9,15 +9,16 @@ import 'package:pprincipal/features/3_content/domain/entities/module.dart';
 import 'package:pprincipal/features/3_content/domain/entities/daily_challenge.dart';
 
 class ContentService {
+  final _supabase = Supabase.instance.client;
+
   /// Load languages from Firestore 'languages' collection.
   /// Returns an empty list if the query fails.
   Future<List<Language>> loadLanguages() async {
     try {
-      final snap = await FirebaseFirestore.instance
-          .collection('languages')
-          .get();
-      return snap.docs
-          .map((d) => Language.fromJson({'id': d.id, ...d.data()}))
+      final resp = await _supabase.from('languages').select();
+      final list = (resp as List<dynamic>?) ?? [];
+      return list
+          .map((e) => Language.fromJson(Map<String, dynamic>.from(e as Map)))
           .toList();
     } catch (_) {
       // Fallback to bundled asset if Firestore is not available / on error.
@@ -33,13 +34,14 @@ class ContentService {
   /// Load modules filtered by `languageId` (ordered by `order`).
   Future<List<Module>> loadModules(String languageId) async {
     try {
-      final snap = await FirebaseFirestore.instance
-          .collection('modules')
-          .where('languageId', isEqualTo: languageId)
-          .orderBy('order')
-          .get();
-      return snap.docs
-          .map((d) => Module.fromJson({'id': d.id, ...d.data()}))
+      final resp = await _supabase
+          .from('modules')
+          .select()
+          .eq('languageId', languageId)
+          .order('order');
+      final list = (resp as List<dynamic>?) ?? [];
+      return list
+          .map((e) => Module.fromJson(Map<String, dynamic>.from(e as Map)))
           .toList();
     } catch (_) {
       final data = await rootBundle.loadString('assets/data/lessons_data.json');
@@ -56,12 +58,14 @@ class ContentService {
   /// Load lessons that belong to a specific module.
   Future<List<Lesson>> loadLessonsForModule(String moduleId) async {
     try {
-      final snap = await FirebaseFirestore.instance
-          .collection('lessons')
-          .where('moduleId', isEqualTo: moduleId)
-          .get();
-      return snap.docs
-          .map((d) => Lesson.fromJson({'id': d.id, ...d.data()}))
+      final resp = await _supabase
+          .from('lessons')
+          .select()
+          .eq('moduleId', moduleId)
+          .order('order');
+      final list = (resp as List<dynamic>?) ?? [];
+      return list
+          .map((e) => Lesson.fromJson(Map<String, dynamic>.from(e as Map)))
           .toList();
     } catch (_) {
       final data = await rootBundle.loadString('assets/data/lessons_data.json');
@@ -78,12 +82,13 @@ class ContentService {
   /// asset JSON.
   Future<List<Phrase>> loadPhrasesForLesson(String lessonId) async {
     try {
-      final snap = await FirebaseFirestore.instance
-          .collection('phrases')
-          .where('lessonId', isEqualTo: lessonId)
-          .get();
-      return snap.docs
-          .map((d) => Phrase.fromJson({'id': d.id, ...d.data()}))
+      final resp = await _supabase
+          .from('phrases')
+          .select()
+          .eq('lessonId', lessonId);
+      final list = (resp as List<dynamic>?) ?? [];
+      return list
+          .map((e) => Phrase.fromJson(Map<String, dynamic>.from(e as Map)))
           .toList();
     } catch (_) {
       final data = await rootBundle.loadString('assets/data/lessons_data.json');
@@ -101,21 +106,20 @@ class ContentService {
     try {
       // Build a UTC start and end timestamp for today and query by the
       // Timestamp field named 'date'. This avoids relying on string fields.
-      final now = DateTime.now().toUtc();
-      final startOfDay = DateTime.utc(now.year, now.month, now.day);
-      final startOfNextDay = startOfDay.add(const Duration(days: 1));
-
-      final snap = await FirebaseFirestore.instance
-          .collection('daily_challenges')
-          .where('languageId', isEqualTo: languageId)
-          .where('date', isGreaterThanOrEqualTo: Timestamp.fromDate(startOfDay))
-          .where('date', isLessThan: Timestamp.fromDate(startOfNextDay))
-          .limit(1)
-          .get();
-
-      if (snap.docs.isEmpty) return null;
-      final d = snap.docs.first;
-      return DailyChallenge.fromJson({'id': d.id, ...d.data()});
+      final today = DateTime.now();
+      final dateStr =
+          '${today.year.toString().padLeft(4, '0')}-${today.month.toString().padLeft(2, '0')}-${today.day.toString().padLeft(2, '0')}';
+      final resp = await _supabase
+          .from('daily_challenges')
+          .select()
+          .eq('languageId', languageId)
+          .eq('dateStr', dateStr)
+          .limit(1);
+      final list = (resp as List<dynamic>?) ?? [];
+      if (list.isEmpty) return null;
+      return DailyChallenge.fromJson(
+        Map<String, dynamic>.from(list.first as Map),
+      );
     } catch (_) {
       // Fallback: try to read from bundled asset. Accept either 'dateStr'
       // (YYYY-MM-DD) or 'date' string to maximize compatibility with older

@@ -18,6 +18,7 @@ class PersistenceService {
   static const String _userDtoKey = 'userDto';
   static const String _userAvatarColorKey = 'userAvatarColor';
   static const String _appPaletteKey = 'appPalette';
+  static const String _themeModeKey = 'themeMode';
   static const String _marketingKey = 'acceptedMarketing';
   static const String _loggedInKey = 'isLoggedIn';
 
@@ -181,6 +182,17 @@ class PersistenceService {
   Future<int?> getAppPalette() async {
     final prefs = await SharedPreferences.getInstance();
     return prefs.getInt(_appPaletteKey);
+  }
+
+  // ThemeMode persistence: 'light' | 'dark' | 'system'
+  Future<void> setThemeMode(String value) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_themeModeKey, value);
+  }
+
+  Future<String?> getThemeMode() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString(_themeModeKey);
   }
 
   Future<void> removeAppPalette() async {

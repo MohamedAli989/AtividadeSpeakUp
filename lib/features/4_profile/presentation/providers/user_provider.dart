@@ -1,8 +1,8 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:supabase_flutter/supabase_flutter.dart' as supabase;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:pprincipal/core/services/persistence_service.dart';
 import 'package:pprincipal/features/4_profile/data/mappers/provide_mapper.dart';
-import 'package:pprincipal/features/3_content/domain/entities/user_progress.dart';
+import 'package:pprincipal/core/domain/user_progress.dart';
 import 'package:pprincipal/features/4_profile/domain/entities/user_profile.dart';
 
 // UserProfile entity moved to domain/entities and imported above.
@@ -50,12 +50,19 @@ class UserNotifier extends StateNotifier<AsyncValue<UserState>> {
       UserProgress? progress;
       final userId = profile.email;
       if (userId != null && userId.isNotEmpty) {
-        final doc = await FirebaseFirestore.instance
-            .collection('user_progress')
-            .doc(userId)
-            .get();
-        if (doc.exists) {
-          progress = UserProgress.fromJson({'userId': doc.id, ...doc.data()!});
+        try {
+          final resp = await supabase.Supabase.instance.client
+              .from('user_progress')
+              .select()
+              .eq('userId', userId)
+              .maybeSingle();
+          if (resp != null) {
+            progress = UserProgress.fromJson(
+              Map<String, dynamic>.from(resp as Map),
+            );
+          }
+        } catch (_) {
+          // ignore
         }
       }
 
@@ -87,6 +94,17 @@ class UserNotifier extends StateNotifier<AsyncValue<UserState>> {
     await _svc.setUserDto(dto);
     state = AsyncValue.data(
       (current ?? const UserState()).copyWith(profile: updatedProfile),
+    );
+  }
+
+  Future<void> setUserPhotoUrl(String? url) async {
+    final current = state.maybeWhen(data: (s) => s, orElse: () => null);
+    final updated = (current?.profile ?? const UserProfile()).copyWith(
+      photoUrl: url,
+    );
+    await _svc.setUserDto(ProvideMapper.toDto(updated));
+    state = AsyncValue.data(
+      (current ?? const UserState()).copyWith(profile: updated),
     );
   }
 
@@ -175,10 +193,11 @@ class UserNotifier extends StateNotifier<AsyncValue<UserState>> {
       lastPracticeDate: DateTime.now(),
     );
 
-    await FirebaseFirestore.instance
-        .collection('user_progress')
-        .doc(userId)
-        .set(updated.toJson());
+    try {
+      await supabase.Supabase.instance.client
+          .from('user_progress')
+          .upsert(updated.toJson());
+    } catch (_) {}
     state = AsyncValue.data(
       (current ?? const UserState()).copyWith(progress: updated),
     );
@@ -211,10 +230,11 @@ class UserNotifier extends StateNotifier<AsyncValue<UserState>> {
       lastPracticeDate: DateTime.now(),
     );
 
-    await FirebaseFirestore.instance
-        .collection('user_progress')
-        .doc(userId)
-        .set(updated.toJson());
+    try {
+      await supabase.Supabase.instance.client
+          .from('user_progress')
+          .upsert(updated.toJson());
+    } catch (_) {}
     state = AsyncValue.data(
       (current ?? const UserState()).copyWith(progress: updated),
     );

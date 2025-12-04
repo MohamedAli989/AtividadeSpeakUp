@@ -1,5 +1,5 @@
 // lib/features/3_content/domain/entities/user_progress.dart
-import 'package:cloud_firestore/cloud_firestore.dart';
+// Removed Firestore dependency; timestamps handled as primitives
 
 class UserProgress {
   final String userId;
@@ -23,12 +23,10 @@ class UserProgress {
   factory UserProgress.fromJson(Map<String, dynamic> json) {
     final ts = json['lastPracticeDate'];
     DateTime dt;
-    if (ts is Timestamp) {
-      dt = ts.toDate();
-    } else if (ts is int) {
+    if (ts is int) {
       dt = DateTime.fromMillisecondsSinceEpoch(ts);
     } else if (ts is String) {
-      dt = DateTime.parse(ts);
+      dt = DateTime.tryParse(ts) ?? DateTime.fromMillisecondsSinceEpoch(0);
     } else {
       dt = DateTime.fromMillisecondsSinceEpoch(0);
     }
@@ -65,7 +63,7 @@ class UserProgress {
       'userId': userId,
       'totalXp': totalXp,
       'currentStreak': currentStreak,
-      'lastPracticeDate': Timestamp.fromDate(lastPracticeDate),
+      'lastPracticeDate': lastPracticeDate.toIso8601String(),
       'completedLessonIds': completedLessonIds,
       'achievedAchievementIds': achievedAchievementIds,
       'completedChallengeIds': completedChallengeIds,

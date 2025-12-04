@@ -74,7 +74,7 @@ class UserSettingsPage extends ConsumerWidget {
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(12),
             ),
-            color: AppColors.primary.withOpacity(0.9),
+            color: AppColors.primary.withAlpha((0.9 * 255).round()),
             child: Padding(
               padding: const EdgeInsets.all(20.0),
               child: Column(

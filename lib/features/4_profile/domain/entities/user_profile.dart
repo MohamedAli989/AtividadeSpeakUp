@@ -3,12 +3,14 @@ class UserProfile {
   final String? name;
   final String? email;
   final String? description;
+  final String? photoUrl;
   final bool loggedIn;
 
   const UserProfile({
     this.name,
     this.email,
     this.description,
+    this.photoUrl,
     this.loggedIn = false,
   });
 
@@ -16,12 +18,14 @@ class UserProfile {
     String? name,
     String? email,
     String? description,
+    String? photoUrl,
     bool? loggedIn,
   }) {
     return UserProfile(
       name: name ?? this.name,
       email: email ?? this.email,
       description: description ?? this.description,
+      photoUrl: photoUrl ?? this.photoUrl,
       loggedIn: loggedIn ?? this.loggedIn,
     );
   }

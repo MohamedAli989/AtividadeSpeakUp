@@ -1,8 +1,8 @@
 // lib/main.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:firebase_core/firebase_core.dart';
-import 'firebase_options.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:pprincipal/core/app/app.dart' show AppWithProviders;
 
 // Re-export App and AppWithProviders for backward compatibility with tests
@@ -10,18 +10,16 @@ export 'package:pprincipal/core/app/app.dart' show AppWithProviders;
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  // Initialize Firebase before running the app.
+  // Load environment and initialize Supabase
   try {
-    await Firebase.initializeApp(
-      options: DefaultFirebaseOptions.currentPlatform,
+    await dotenv.load(fileName: '.env');
+    await Supabase.initialize(
+      url: dotenv.env['SUPABASE_URL']!,
+      anonKey: dotenv.env['SUPABASE_ANON_KEY']!,
     );
   } catch (e, st) {
-    // If Firebase isn't configured (no firebase_options.dart or platform files),
-    // fail gracefully and continue running the app so the rest of the UI is usable.
-    // Recommend running `flutterfire configure` to generate platform config.
-    // Keep the error visible in logs for debugging.
     // ignore: avoid_print
-    print('Warning: Firebase.initializeApp() failed: $e\n$st');
+    print('Warning: Supabase.initialize() failed: $e\n$st');
   }
 
   // Start app inside a ProviderScope so Riverpod listeners work (acceptedTermsProvider).

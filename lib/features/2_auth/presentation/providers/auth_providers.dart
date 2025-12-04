@@ -5,8 +5,7 @@ import 'package:pprincipal/features/2_auth/domain/usecases/login_usecase.dart';
 import 'package:pprincipal/features/2_auth/domain/usecases/pular_login_usecase.dart';
 import 'package:pprincipal/features/2_auth/domain/usecases/aceitar_termos_usecase.dart';
 import 'package:pprincipal/features/2_auth/domain/usecases/verificar_status_app_usecase.dart';
-import 'package:pprincipal/src/core/providers.dart'
-    show persistenceServiceProvider;
+import 'package:pprincipal/core/providers.dart' show persistenceServiceProvider;
 
 final authRepositoryProvider = Provider<IAuthRepository>((ref) {
   // Use the shared PersistenceService provider so the same instance

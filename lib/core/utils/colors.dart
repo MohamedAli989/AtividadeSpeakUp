@@ -19,3 +19,26 @@ class AppColors {
   static const Color primarySlate = textPrimary;
   static const Color textLight = Colors.white;
 }
+
+class AppPalettes {
+  const AppPalettes._();
+
+  static const light = {
+    'background': Color(0xFFF8FAFB),
+    'surface': Color(0xFFFFFFFF),
+    'textPrimary': Color(0xFF1F2937),
+    'textSecondary': Color(0xFF6B7280),
+    'primary': AppColors.primary,
+    'secondary': AppColors.secondary,
+  };
+
+  static const dark = {
+    // Less-aggressive dark palette (not pitch-black)
+    'background': Color(0xFF141414),
+    'surface': Color(0xFF222222),
+    'textPrimary': Color(0xFFEEEEEE),
+    'textSecondary': Color(0xFFB0B6BC),
+    'primary': Color(0xFF5CBF6A),
+    'secondary': AppColors.secondary,
+  };
+}

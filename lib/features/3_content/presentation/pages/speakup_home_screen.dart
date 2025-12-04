@@ -5,14 +5,16 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shimmer/shimmer.dart';
 
 import 'package:pprincipal/core/utils/colors.dart';
-import 'package:pprincipal/features/3_content/data/datasources/content_remote_datasource.dart';
+import 'package:pprincipal/core/presentation/widgets/gradient_scaffold.dart';
 import 'package:pprincipal/features/3_content/presentation/dialogs/provider_actions_dialog.dart';
 import 'package:pprincipal/features/3_content/domain/entities/lesson.dart';
-import 'package:pprincipal/features/3_content/domain/entities/module.dart';
+// module entity imported via providers when needed
+import 'package:pprincipal/features/3_content/presentation/widgets/notice_card.dart';
+import 'package:pprincipal/features/3_content/presentation/providers/content_providers.dart';
 import 'package:pprincipal/features/4_profile/presentation/providers/user_provider.dart';
 import 'package:pprincipal/features/3_content/presentation/pages/lesson_screen.dart';
 import 'package:pprincipal/features/3_content/presentation/pages/vocabulary_page.dart';
-import 'package:pprincipal/features/4_profile/presentation/pages/settings_screen.dart';
+import 'package:pprincipal/features/4_profile/presentation/pages/profile_page.dart';
 import 'package:pprincipal/features/5_notifications/presentation/pages/notifications_list_page.dart';
 
 class SpeakUpHomeScreen extends ConsumerStatefulWidget {
@@ -29,7 +31,7 @@ class _SpeakUpHomeScreenState extends ConsumerState<SpeakUpHomeScreen> {
   List<Widget> get _widgetOptions => <Widget>[
     _buildActivitiesTabContent(),
     const VocabularyPage(),
-    const SettingsScreen(),
+    const ProfilePage(),
   ];
 
   @override
@@ -72,13 +74,7 @@ class _SpeakUpHomeScreenState extends ConsumerState<SpeakUpHomeScreen> {
 
   void _onItemTapped(int index) => setState(() => _selectedIndex = index);
 
-  Future<Map<String, dynamic>> _fetchHomeData() async {
-    final svc = ContentRemoteDataSource();
-    final languages = await svc.loadLanguages();
-    final languageId = languages.isNotEmpty ? languages.first.id : '';
-    final modules = await svc.loadModules(languageId);
-    return {'languageId': languageId, 'modules': modules};
-  }
+  // Home data is loaded via Riverpod providers (languages/modules/lessons).
 
   Widget _construirCarregamentoShimmer() {
     return SizedBox(
@@ -289,62 +285,142 @@ class _SpeakUpHomeScreenState extends ConsumerState<SpeakUpHomeScreen> {
               const SizedBox(height: 12),
               horizontalBar,
               const SizedBox(height: 12),
-              FutureBuilder<Map<String, dynamic>>(
-                future: _fetchHomeData(),
-                builder: (context, snapshot) {
-                  if (snapshot.connectionState != ConnectionState.done) {
-                    return _construirCarregamentoShimmer();
-                  }
-                  if (snapshot.hasError) {
-                    return const Center(
-                      child: Text('Erro ao carregar atividades.'),
-                    );
-                  }
-                  final data = snapshot.data!;
-                  final modules = data['modules'] as List<Module>? ?? [];
-                  if (modules.isEmpty) {
-                    return const Center(
-                      child: Text('Nenhuma lição disponível.'),
-                    );
-                  }
-                  return ListView.builder(
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    itemCount: modules.length,
-                    itemBuilder: (context, index) {
-                      final module = modules[index];
-                      return Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Padding(
-                            padding: const EdgeInsets.symmetric(vertical: 8.0),
-                            child: Text(
-                              module.title,
-                              style: Theme.of(context).textTheme.headlineSmall,
+              // Mural de Recados
+              Builder(
+                builder: (_) {
+                  final recadosAsync = ref.watch(recadosProvider);
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 8.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Padding(
+                          padding: EdgeInsets.symmetric(horizontal: 4.0),
+                          child: Text(
+                            'Mural de Recados',
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              color: AppColors.primarySlate,
                             ),
                           ),
-                          FutureBuilder<List<Lesson>>(
-                            future: ContentRemoteDataSource()
-                                .loadLessonsForModule(module.id),
-                            builder: (context, snap) {
-                              if (snap.connectionState !=
-                                  ConnectionState.done) {
-                                return _construirCarregamentoShimmer();
-                              }
-                              final lessons = snap.data ?? [];
-                              if (lessons.isEmpty) {
-                                return const SizedBox.shrink();
-                              }
+                        ),
+                        const SizedBox(height: 8),
+                        recadosAsync.when(
+                          data: (recados) {
+                            if (recados.isEmpty) {
+                              return const Padding(
+                                padding: EdgeInsets.symmetric(horizontal: 4.0),
+                                child: Text('Nenhum recado disponível.'),
+                              );
+                            }
+                            return Column(
+                              children: recados
+                                  .map(
+                                    (r) => Padding(
+                                      padding: const EdgeInsets.symmetric(
+                                        vertical: 6.0,
+                                      ),
+                                      child: NoticeCard(notice: r),
+                                    ),
+                                  )
+                                  .toList(),
+                            );
+                          },
+                          loading: () => const Padding(
+                            padding: EdgeInsets.symmetric(vertical: 12.0),
+                            child: Center(child: CircularProgressIndicator()),
+                          ),
+                          error: (e, _) => Padding(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 4.0,
+                            ),
+                            child: Text('Erro ao carregar recados.'),
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                },
+              ),
+              const SizedBox(height: 12),
+              // Use Riverpod providers to load languages -> modules -> lessons
+              Builder(
+                builder: (_) {
+                  final langsAsync = ref.watch(languagesProvider);
+                  return langsAsync.when(
+                    data: (langs) {
+                      if (langs.isEmpty) {
+                        return const Center(
+                          child: Text('Nenhuma lição disponível.'),
+                        );
+                      }
+                      final languageId = langs.first.id;
+                      final modsAsync = ref.watch(modulesProvider(languageId));
+                      return modsAsync.when(
+                        data: (modules) {
+                          if (modules.isEmpty) {
+                            return const Center(
+                              child: Text('Nenhuma lição disponível.'),
+                            );
+                          }
+                          return ListView.builder(
+                            shrinkWrap: true,
+                            physics: const NeverScrollableScrollPhysics(),
+                            itemCount: modules.length,
+                            itemBuilder: (context, index) {
+                              final module = modules[index];
                               return Column(
-                                children: lessons
-                                    .map((l) => _buildLessonCard(l))
-                                    .toList(),
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Padding(
+                                    padding: const EdgeInsets.symmetric(
+                                      vertical: 8.0,
+                                    ),
+                                    child: Text(
+                                      module.title,
+                                      style: Theme.of(
+                                        context,
+                                      ).textTheme.headlineSmall,
+                                    ),
+                                  ),
+                                  Consumer(
+                                    builder: (ctx2, ref2, _) {
+                                      final lessonsAsync2 = ref2.watch(
+                                        lessonsProvider(module.id),
+                                      );
+                                      return lessonsAsync2.when(
+                                        data: (lessons) {
+                                          if (lessons.isEmpty) {
+                                            return const SizedBox.shrink();
+                                          }
+                                          return Column(
+                                            children: lessons
+                                                .map((l) => _buildLessonCard(l))
+                                                .toList(),
+                                          );
+                                        },
+                                        loading: () =>
+                                            _construirCarregamentoShimmer(),
+                                        error: (e, _) =>
+                                            const SizedBox.shrink(),
+                                      );
+                                    },
+                                  ),
+                                ],
                               );
                             },
-                          ),
-                        ],
+                          );
+                        },
+                        loading: () => _construirCarregamentoShimmer(),
+                        error: (e, _) => const Center(
+                          child: Text('Erro ao carregar módulos.'),
+                        ),
                       );
                     },
+                    loading: () => _construirCarregamentoShimmer(),
+                    error: (e, _) =>
+                        const Center(child: Text('Erro ao carregar línguas.')),
                   );
                 },
               ),
@@ -357,8 +433,7 @@ class _SpeakUpHomeScreenState extends ConsumerState<SpeakUpHomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.background,
+    return GradientScaffold(
       appBar: _selectedIndex == 0
           ? AppBar(
               title: Text('SpeakUp', style: newMethod()),
@@ -389,7 +464,9 @@ class _SpeakUpHomeScreenState extends ConsumerState<SpeakUpHomeScreen> {
                 onPressed: () => _onItemTapped(0),
               ),
               title: Text(
-                _selectedIndex == 1 ? 'Vocabulário' : 'Configurações',
+                _selectedIndex == 1
+                    ? 'Vocabulário'
+                    : (_selectedIndex == 2 ? 'Perfil' : ''),
               ),
               backgroundColor: AppColors.surface,
               elevation: 0,
@@ -409,8 +486,9 @@ class _SpeakUpHomeScreenState extends ConsumerState<SpeakUpHomeScreen> {
             label: 'Vocabulário',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.settings),
-            label: 'Configurações',
+            icon: Icon(Icons.person_outline),
+            activeIcon: Icon(Icons.person),
+            label: 'Perfil',
           ),
         ],
         currentIndex: _selectedIndex,

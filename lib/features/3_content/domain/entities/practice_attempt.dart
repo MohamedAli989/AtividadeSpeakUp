@@ -1,5 +1,5 @@
 // lib/features/3_content/domain/entities/practice_attempt.dart
-import 'package:cloud_firestore/cloud_firestore.dart';
+// Removed Firestore dependency; timestamps handled as int or ISO strings
 
 class PracticeAttempt {
   final String id;
@@ -21,12 +21,10 @@ class PracticeAttempt {
   factory PracticeAttempt.fromJson(Map<String, dynamic> json) {
     final ts = json['timestamp'];
     DateTime dt;
-    if (ts is Timestamp) {
-      dt = ts.toDate();
-    } else if (ts is int) {
+    if (ts is int) {
       dt = DateTime.fromMillisecondsSinceEpoch(ts);
     } else if (ts is String) {
-      dt = DateTime.parse(ts);
+      dt = DateTime.tryParse(ts) ?? DateTime.now();
     } else {
       dt = DateTime.now();
     }
@@ -48,7 +46,7 @@ class PracticeAttempt {
       'phraseId': phraseId,
       'lessonId': lessonId,
       'audioUrl': audioUrl,
-      'timestamp': Timestamp.fromDate(timestamp),
+      'timestamp': timestamp.toIso8601String(),
     };
   }
 }

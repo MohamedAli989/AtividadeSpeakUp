@@ -8,6 +8,7 @@ class ProvideMapper {
       name: u.name,
       email: u.email,
       description: u.description,
+      photoUrl: u.photoUrl,
       loggedIn: u.loggedIn,
     );
   }
@@ -17,6 +18,7 @@ class ProvideMapper {
       name: dto.name,
       email: dto.email,
       description: dto.description,
+      photoUrl: dto.photoUrl,
       loggedIn: dto.loggedIn,
     );
   }

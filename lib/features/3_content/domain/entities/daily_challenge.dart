@@ -1,6 +1,5 @@
 // lib/features/3_content/domain/entities/daily_challenge.dart
-import 'package:cloud_firestore/cloud_firestore.dart';
-
+// DailyChallenge: avoid Firestore dependency; treat timestamps as primitives
 class DailyChallenge {
   final String id;
   final DateTime date;
@@ -19,12 +18,10 @@ class DailyChallenge {
   factory DailyChallenge.fromJson(Map<String, dynamic> json) {
     final ts = json['date'];
     DateTime dt;
-    if (ts is Timestamp) {
-      dt = ts.toDate();
-    } else if (ts is int) {
+    if (ts is int) {
       dt = DateTime.fromMillisecondsSinceEpoch(ts);
     } else if (ts is String) {
-      dt = DateTime.parse(ts);
+      dt = DateTime.tryParse(ts) ?? DateTime.now();
     } else {
       dt = DateTime.now();
     }
@@ -47,7 +44,7 @@ class DailyChallenge {
   Map<String, dynamic> toJson() {
     return {
       'id': id,
-      'date': Timestamp.fromDate(date),
+      'date': date.toIso8601String(),
       'title': title,
       'phraseIds': phraseIds,
       'xpBonus': xpBonus,

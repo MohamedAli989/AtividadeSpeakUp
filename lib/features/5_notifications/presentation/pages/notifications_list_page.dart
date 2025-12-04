@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:pprincipal/features/5_notifications/presentation/providers/notification_notifier.dart';
 import 'package:pprincipal/features/5_notifications/domain/entities/app_notification.dart';
+import 'package:pprincipal/core/presentation/widgets/empty_state_widget.dart';
 
 class NotificationsListPage extends ConsumerWidget {
   final String userId;
@@ -35,7 +36,10 @@ class NotificationsListPage extends ConsumerWidget {
       body: provider.when(
         data: (list) {
           if (list.isEmpty) {
-            return const Center(child: Text('Nenhuma notificação.'));
+            return EmptyStateWidget(
+              icon: Icons.notifications_none_rounded,
+              message: 'Nenhuma notificação.',
+            );
           }
           return ListView.builder(
             itemCount: list.length,

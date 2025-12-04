@@ -5,12 +5,14 @@ class UserDTO {
   final String? name;
   final String? email;
   final String? description;
+  final String? photoUrl;
   final bool loggedIn;
 
   const UserDTO({
     this.name,
     this.email,
     this.description,
+    this.photoUrl,
     this.loggedIn = false,
   });
 
@@ -18,12 +20,14 @@ class UserDTO {
     String? name,
     String? email,
     String? description,
+    String? photoUrl,
     bool? loggedIn,
   }) {
     return UserDTO(
       name: name ?? this.name,
       email: email ?? this.email,
       description: description ?? this.description,
+      photoUrl: photoUrl ?? this.photoUrl,
       loggedIn: loggedIn ?? this.loggedIn,
     );
   }
@@ -33,6 +37,7 @@ class UserDTO {
       'name': name,
       'email': email,
       'description': description,
+      'photoUrl': photoUrl,
       'loggedIn': loggedIn,
     };
   }
@@ -44,6 +49,7 @@ class UserDTO {
       name: map['name'] as String?,
       email: map['email'] as String?,
       description: map['description'] as String?,
+      photoUrl: map['photoUrl'] as String?,
       loggedIn: map['loggedIn'] as bool? ?? false,
     );
   }
@@ -55,7 +61,7 @@ class UserDTO {
 
   @override
   String toString() =>
-      'UserDTO(name: $name, email: $email, description: $description, loggedIn: $loggedIn)';
+      'UserDTO(name: $name, email: $email, description: $description, photoUrl: $photoUrl, loggedIn: $loggedIn)';
 
   @override
   bool operator ==(Object other) {
@@ -65,10 +71,15 @@ class UserDTO {
         other.name == name &&
         other.email == email &&
         other.description == description &&
+        other.photoUrl == photoUrl &&
         other.loggedIn == loggedIn;
   }
 
   @override
   int get hashCode =>
-      name.hashCode ^ email.hashCode ^ description.hashCode ^ loggedIn.hashCode;
+      name.hashCode ^
+      email.hashCode ^
+      description.hashCode ^
+      photoUrl.hashCode ^
+      loggedIn.hashCode;
 }

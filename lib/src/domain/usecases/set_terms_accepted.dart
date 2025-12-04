@@ -1,11 +1,2 @@
-import '../repositories/terms_repository.dart';
-
-class SetTermsAccepted {
-  final TermsRepository repository;
-
-  SetTermsAccepted(this.repository);
-
-  Future<void> call(bool value) async {
-    await repository.setAccepted(value);
-  }
-}
+// Deprecated: use `features/2_auth/domain/usecases/aceitar_termos_usecase.dart`
+// which delegates to `IAuthRepository.acceptTerms()`.

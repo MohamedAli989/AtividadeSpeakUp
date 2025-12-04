@@ -1,15 +1,5 @@
-import 'package:pprincipal/core/services/persistence_service.dart';
-
-class LocalTermsDataSource {
-  final PersistenceService _persistenceService;
-
-  LocalTermsDataSource(this._persistenceService);
-
-  Future<void> setAcceptedTerms(bool value) async {
-    await _persistenceService.setAcceptedTerms(value);
-  }
-
-  Future<bool> getAcceptedTerms() async {
-    return await _persistenceService.getAcceptedTerms();
-  }
-}
+// Deprecated: logic moved into `features/2_auth` which uses
+// `AuthRepositoryImpl` + `PersistenceService`. Keep this file as a
+// marker during the refactor; it can be deleted once callers are updated.
+//
+// See: lib/features/2_auth/data/repositories/auth_repository_impl.dart

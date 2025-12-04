@@ -3,6 +3,8 @@ import 'package:pprincipal/features/3_content/domain/entities/lesson.dart';
 import 'package:pprincipal/features/3_content/domain/entities/phrase.dart';
 import 'package:pprincipal/features/3_content/domain/repositories/i_content_repository.dart';
 import 'package:pprincipal/features/3_content/data/datasources/content_remote_datasource.dart';
+import 'package:pprincipal/features/3_content/domain/entities/notice.dart';
+import 'package:pprincipal/features/3_content/domain/entities/language.dart';
 
 /// Implementação concreta do repositório de conteúdo.
 class ContentRepositoryImpl implements IContentRepository {
@@ -23,5 +25,15 @@ class ContentRepositoryImpl implements IContentRepository {
   @override
   Future<List<Phrase>> carregarFrasesDaLicao(String lessonId) async {
     return await _dataSource.loadPhrasesForLesson(lessonId);
+  }
+
+  @override
+  Future<List<Notice>> carregarRecados() async {
+    return await _dataSource.getNotices();
+  }
+
+  @override
+  Future<List<Language>> carregarLinguas() async {
+    return await _dataSource.loadLanguages();
   }
 }

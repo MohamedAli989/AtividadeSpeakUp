@@ -11,6 +11,8 @@ import 'package:pprincipal/features/3_content/domain/entities/vocabulary_item.da
 import 'package:pprincipal/features/3_content/presentation/providers/vocabulary_usecase_providers.dart';
 import 'package:pprincipal/features/3_content/presentation/providers/vocabulary_providers.dart';
 import 'package:pprincipal/features/3_content/domain/entities/language.dart';
+import 'package:pprincipal/core/utils/colors.dart';
+import 'package:pprincipal/core/presentation/widgets/empty_state_widget.dart';
 
 class VocabularyPage extends ConsumerStatefulWidget {
   const VocabularyPage({super.key});
@@ -35,7 +37,7 @@ class _VocabularyPageState extends ConsumerState<VocabularyPage> {
     {'en': 'night', 'pt': 'noite'},
   ];
 
-  late List<bool> _expanded;
+  late Set<String> _expandedIds;
   String _selectedInitial = 'All';
   // Minimal API support (optional). Provide an API key via:
   // --dart-define=GOOGLE_TRANSLATE_API_KEY=YOUR_KEY
@@ -57,7 +59,7 @@ class _VocabularyPageState extends ConsumerState<VocabularyPage> {
   @override
   void initState() {
     super.initState();
-    _expanded = List<bool>.filled(_translations.length, false);
+    _expandedIds = <String>{};
     _scrollController = ScrollController();
     _scrollController.addListener(_onScroll);
     // API disabled by default (hidden). Use the refresh action to force a fetch.
@@ -337,159 +339,208 @@ class _VocabularyPageState extends ConsumerState<VocabularyPage> {
             ),
             const SizedBox(height: 12),
             Expanded(
-              child: ListView.separated(
-                controller: _scrollController,
-                padding: const EdgeInsets.only(bottom: 96),
-                itemCount: _filteredTranslations().length,
-                separatorBuilder: (_, __) => const SizedBox(height: 12),
-                itemBuilder: (context, index) {
-                  final pair = _filteredTranslations()[index];
-                  final globalIndex = _translations.indexWhere(
-                    (t) => t['en'] == pair['en'],
-                  );
-                  final expanded = _expanded[globalIndex];
-                  return Dismissible(
-                    key: ValueKey(pair['id'] ?? '${pair['en']}_$index'),
-                    direction: DismissDirection.endToStart,
-                    background: Container(
-                      decoration: BoxDecoration(
-                        color: Colors.red,
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      alignment: Alignment.centerRight,
-                      padding: const EdgeInsets.only(right: 20),
-                      child: const Icon(Icons.delete, color: Colors.white),
-                    ),
-                    confirmDismiss: (direction) async {
-                      final result = await showDialog<bool>(
-                        context: context,
-                        barrierDismissible: false,
-                        builder: (ctx) => AlertDialog(
-                          title: const Text('Remover esta palavra?'),
-                          actions: [
-                            TextButton(
-                              onPressed: () => Navigator.of(ctx).pop(false),
-                              child: const Text('Cancelar'),
-                            ),
-                            TextButton(
-                              onPressed: () => Navigator.of(ctx).pop(true),
-                              child: const Text('Remover'),
-                            ),
-                          ],
-                        ),
-                      );
-                      return result == true;
-                    },
-                    onDismissed: (direction) {
-                      final removedId = pair['id'] ?? '${pair['en']}_$index';
-                      final user = ref.read(currentUserProvider);
-                      final userId = user?.email ?? 'u1';
-                      final removedItem = VocabularyItem(
-                        id: removedId,
-                        userId: userId,
-                        word: pair['en'] ?? '',
-                        translation: pair['pt'] ?? '',
-                        originalPhraseId: 'swipe',
-                      );
-
-                      // remove through notifier (which updates persistence)
-                      ref
-                          .read(vocabularyListProvider.notifier)
-                          .removerItem(removedId);
-
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: const Text('Palavra removida.'),
-                          action: SnackBarAction(
-                            label: 'Desfazer',
-                            onPressed: () async {
-                              final salvar = ref.read(
-                                salvarVocabularioUseCaseProvider,
-                              );
-                              await salvar(removedItem);
-                            },
-                          ),
-                        ),
-                      );
-                    },
-                    child: GestureDetector(
-                      onTap: () async {
-                        final willExpand = !_expanded[globalIndex];
-                        if (willExpand &&
-                            _useApi &&
-                            !_apiTranslations.containsKey(pair['en']!)) {
-                          await _fetchTranslationFor(pair['en']!);
-                        }
-                        setState(() => _expanded[globalIndex] = willExpand);
-                      },
-                      child: AnimatedContainer(
-                        duration: const Duration(milliseconds: 250),
-                        curve: Curves.easeInOut,
-                        padding: const EdgeInsets.all(12),
-                        height: expanded ? 110 : 68,
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(12),
-                          boxShadow: [
-                            BoxShadow(
-                              color: const Color.fromRGBO(0, 0, 0, 0.04),
-                              blurRadius: 6,
-                              offset: const Offset(0, 3),
-                            ),
-                          ],
-                        ),
-                        child: Row(
-                          crossAxisAlignment: expanded
-                              ? CrossAxisAlignment.start
-                              : CrossAxisAlignment.center,
-                          children: [
-                            CircleAvatar(
-                              radius: expanded ? 26 : 18,
-                              backgroundColor: Colors.blueAccent,
-                              child: Text(
-                                pair['en']!.substring(0, 1).toUpperCase(),
-                                style: const TextStyle(color: Colors.white),
+              child: Consumer(
+                builder: (ctx, ref2, _) {
+                  final vocabAsync = ref2.watch(vocabularyListProvider);
+                  return vocabAsync.when(
+                    data: (items) {
+                      final filtered = _selectedInitial == 'All'
+                          ? items
+                          : items
+                                .where(
+                                  (i) =>
+                                      i.word.isNotEmpty &&
+                                      i.word[0].toUpperCase() ==
+                                          _selectedInitial,
+                                )
+                                .toList();
+                      if (filtered.isEmpty) {
+                        return EmptyStateWidget(
+                          icon: Icons.menu_book_rounded,
+                          message: 'Nenhuma palavra encontrada.',
+                        );
+                      }
+                      return ListView.separated(
+                        controller: _scrollController,
+                        padding: const EdgeInsets.only(bottom: 96),
+                        itemCount: filtered.length,
+                        separatorBuilder: (_, __) => const SizedBox(height: 12),
+                        itemBuilder: (context, index) {
+                          final item = filtered[index];
+                          final expanded = _expandedIds.contains(item.id);
+                          return Dismissible(
+                            key: ValueKey(item.id),
+                            direction: DismissDirection.endToStart,
+                            background: Container(
+                              decoration: BoxDecoration(
+                                color: AppColors.error,
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              alignment: Alignment.centerRight,
+                              padding: const EdgeInsets.only(right: 20),
+                              child: const Icon(
+                                Icons.delete,
+                                color: Colors.white,
                               ),
                             ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    pair['en']!,
-                                    style: TextStyle(
-                                      fontSize: expanded ? 20 : 16,
-                                      fontWeight: FontWeight.w600,
-                                    ),
+                            confirmDismiss: (direction) async {
+                              final result = await showDialog<bool>(
+                                context: context,
+                                barrierDismissible: false,
+                                builder: (ctx) => AlertDialog(
+                                  title: const Text('Remover esta palavra?'),
+                                  content: Text(
+                                    "Tem certeza que deseja remover '${item.word}'?",
                                   ),
-                                  const SizedBox(height: 6),
-                                  Text(
-                                    _apiTranslations[pair['en']!] ??
-                                        pair['pt']!,
-                                    style: TextStyle(
-                                      fontSize: expanded ? 18 : 14,
-                                      color: Colors.grey.shade700,
+                                  actions: [
+                                    TextButton(
+                                      onPressed: () =>
+                                          Navigator.of(ctx).pop(false),
+                                      child: const Text('Cancelar'),
                                     ),
-                                  ),
-                                  if (expanded) ...[
-                                    const SizedBox(height: 8),
-                                    Text(
-                                      'Exemplo: "${pair['en']!} everyone" → "${pair['pt']!} a todos"',
-                                      style: TextStyle(
-                                        fontSize: 13,
-                                        color: Colors.grey.shade600,
-                                      ),
+                                    TextButton(
+                                      onPressed: () =>
+                                          Navigator.of(ctx).pop(true),
+                                      child: const Text('Remover'),
                                     ),
                                   ],
-                                ],
+                                ),
+                              );
+                              return result == true;
+                            },
+                            onDismissed: (direction) {
+                              final removedItem = item;
+                              ref2
+                                  .read(vocabularyListProvider.notifier)
+                                  .removerItem(item.id);
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: const Text('Palavra removida.'),
+                                  action: SnackBarAction(
+                                    label: 'Desfazer',
+                                    onPressed: () async {
+                                      final salvar = ref2.read(
+                                        salvarVocabularioUseCaseProvider,
+                                      );
+                                      await salvar(removedItem);
+                                    },
+                                  ),
+                                ),
+                              );
+                            },
+                            child: GestureDetector(
+                              onTap: () async {
+                                final willExpand = !_expandedIds.contains(
+                                  item.id,
+                                );
+                                if (willExpand &&
+                                    _useApi &&
+                                    !_apiTranslations.containsKey(item.word)) {
+                                  await _fetchTranslationFor(item.word);
+                                }
+                                setState(() {
+                                  if (willExpand) {
+                                    _expandedIds.add(item.id);
+                                  } else {
+                                    _expandedIds.remove(item.id);
+                                  }
+                                });
+                              },
+                              child: AnimatedContainer(
+                                duration: const Duration(milliseconds: 250),
+                                curve: Curves.easeInOut,
+                                padding: const EdgeInsets.all(12),
+                                height: expanded ? 150 : 76,
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(12),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: const Color.fromRGBO(
+                                        0,
+                                        0,
+                                        0,
+                                        0.04,
+                                      ),
+                                      blurRadius: 6,
+                                      offset: const Offset(0, 3),
+                                    ),
+                                  ],
+                                ),
+                                child: Row(
+                                  crossAxisAlignment: expanded
+                                      ? CrossAxisAlignment.start
+                                      : CrossAxisAlignment.center,
+                                  children: [
+                                    CircleAvatar(
+                                      radius: expanded ? 26 : 18,
+                                      backgroundColor: Colors.blueAccent,
+                                      child: Text(
+                                        item.word.substring(0, 1).toUpperCase(),
+                                        style: const TextStyle(
+                                          color: Colors.white,
+                                        ),
+                                      ),
+                                    ),
+                                    const SizedBox(width: 12),
+                                    Expanded(
+                                      child: Column(
+                                        mainAxisSize: MainAxisSize.min,
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.center,
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            item.word,
+                                            maxLines: expanded ? null : 1,
+                                            overflow: expanded
+                                                ? TextOverflow.visible
+                                                : TextOverflow.ellipsis,
+                                            style: TextStyle(
+                                              fontSize: expanded ? 20 : 16,
+                                              fontWeight: FontWeight.w600,
+                                            ),
+                                          ),
+                                          const SizedBox(height: 6),
+                                          Text(
+                                            _apiTranslations[item.word] ??
+                                                item.translation,
+                                            maxLines: expanded ? null : 1,
+                                            overflow: expanded
+                                                ? TextOverflow.visible
+                                                : TextOverflow.ellipsis,
+                                            style: TextStyle(
+                                              fontSize: expanded ? 18 : 14,
+                                              color: Colors.grey.shade700,
+                                            ),
+                                          ),
+                                          if (expanded) ...[
+                                            const SizedBox(height: 8),
+                                            Text(
+                                              'Exemplo: "${item.word} everyone" → "${item.translation} a todos"',
+                                              style: TextStyle(
+                                                fontSize: 13,
+                                                color: Colors.grey.shade600,
+                                              ),
+                                            ),
+                                          ],
+                                        ],
+                                      ),
+                                    ),
+                                    const SizedBox(width: 8),
+                                  ],
+                                ),
                               ),
                             ),
-                            const SizedBox(width: 8),
-                          ],
-                        ),
-                      ),
+                          );
+                        },
+                      );
+                    },
+                    loading: () =>
+                        const Center(child: CircularProgressIndicator()),
+                    error: (e, _) => const Center(
+                      child: Text('Erro ao carregar vocabulário.'),
                     ),
                   );
                 },
@@ -508,14 +559,7 @@ class _VocabularyPageState extends ConsumerState<VocabularyPage> {
     super.dispose();
   }
 
-  // Filter is now a DropdownButton at top; helper removed.
-
-  List<Map<String, String>> _filteredTranslations() {
-    if (_selectedInitial == 'All') return _translations;
-    return _translations
-        .where((t) => t['en']!.toUpperCase().startsWith(_selectedInitial))
-        .toList();
-  }
+  // Filter is now a DropdownButton at top; translations are driven by provider.
 }
 
 /// Show the manual add-words sheet (top-level so it can be called from helpers)
@@ -684,6 +728,8 @@ class _ImportCsvSheetState extends State<_ImportCsvSheet> {
                   ? null
                   : () async {
                       setState(() => _loading = true);
+                      final navigator = Navigator.of(context);
+                      final messenger = ScaffoldMessenger.of(context);
                       final salvar = widget.ref.read(
                         salvarVocabularioUseCaseProvider,
                       );
@@ -714,13 +760,10 @@ class _ImportCsvSheetState extends State<_ImportCsvSheet> {
                       }
                       setState(() => _loading = false);
                       if (!mounted) return;
-                      // ignore: use_build_context_synchronously
-                      Navigator.of(context).pop();
-                      if (mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Importação concluída')),
-                        );
-                      }
+                      navigator.pop();
+                      messenger.showSnackBar(
+                        const SnackBar(content: Text('Importação concluída')),
+                      );
                     },
               child: _loading
                   ? const SizedBox(
@@ -851,6 +894,8 @@ class _AddWordsSheetState extends State<_AddWordsSheet> {
                   ? null
                   : () async {
                       setState(() => _saving = true);
+                      final navigator = Navigator.of(context);
+                      final messenger = ScaffoldMessenger.of(context);
                       final user = widget.ref.read(currentUserProvider);
                       final userId = user?.email ?? 'u1';
                       final salvar = widget.ref.read(
@@ -872,13 +917,10 @@ class _AddWordsSheetState extends State<_AddWordsSheet> {
                       }
                       setState(() => _saving = false);
                       if (!mounted) return;
-                      // ignore: use_build_context_synchronously
-                      Navigator.of(context).pop();
-                      if (mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Palavras adicionadas')),
-                        );
-                      }
+                      navigator.pop();
+                      messenger.showSnackBar(
+                        const SnackBar(content: Text('Palavras adicionadas')),
+                      );
                     },
               child: _saving
                   ? const SizedBox(
